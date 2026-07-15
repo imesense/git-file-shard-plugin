@@ -9,10 +9,16 @@ block_cipher = None
 
 a = Analysis(
     ['src/git_file_shard/main.py'],
-    pathex=[],
+    pathex=['src'],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=[
+        'git_file_shard',
+        'git_file_shard.main',
+        'git_file_shard.splitter',
+        'git_file_shard.scanner',
+        'git_file_shard.gitignore',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

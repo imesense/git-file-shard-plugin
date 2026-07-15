@@ -1,142 +1,144 @@
-import hashlib
+"""
+Application entry point for Git plugin.
+"""
 
 from argparse import ArgumentParser
-from os import path, remove
 
-DEFAULT_CHUNK_MB = 50
-
-def split_file(file_path, chunk_mb=DEFAULT_CHUNK_MB):
-    if not path.isfile(file_path):
-        print(f"Error: '{file_path}' file was not found!")
-        return False
-
-    chunk_size = chunk_mb * 1024 * 1024
-    part_number = 1
-    with open(file_path, 'rb') as file:
-        while True:
-            data = file.read(chunk_size)
-            if not data:
-                break
-
-            part_name = f"{file_path}.part{part_number:03d}"
-            with open(part_name, 'wb') as pf:
-                pf.write(data)
-
-            print(f"Created part: {part_name} ({len(data)} bytes)")
-            part_number += 1
-
-    print(f"Split completed. Parts count: {part_number - 1}")
-
-    return True
-
-def merge_files(base_name, output_path=None):
-    if output_path is None:
-        output_path = base_name + ".restored"
-
-    part_number = 1
-    total_bytes = 0
-    with open(output_path, 'wb') as output_file:
-        while True:
-            part_name = f"{base_name}.part{part_number:03d}"
-            if not path.isfile(part_name):
-                break
-
-            with open(part_name, 'rb') as part_file:
-                data = part_file.read()
-                output_file.write(data)
-                total_bytes += len(data)
-
-            print(f"Read part: {part_name} ({len(data)} bytes)")
-
-            part_number += 1
-
-    if part_number == 1:
-        print("Error: no one part was not found!")
-
-        if path.exists(output_path) and path.getsize(output_path) == 0:
-            remove(output_path)
-        return None
-
-    print(f"Merge completed. Merged {total_bytes} bytes in '{output_path}'")
-
-    return output_path
-
-def get_file_hash(file_path, algorithm='sha256'):
-    if not path.isfile(file_path):
-        return None
-
-    hash = hashlib.new(algorithm)
-    with open(file_path, 'rb') as file:
-        for chunk in iter(lambda: file.read(8192), b''):
-            hash.update(chunk)
-
-    return hash.hexdigest()
+from git_file_shard.scanner import (
+    scan_repo,
+    restore_repo,
+    split_single,
+    merge_single
+)
+from git_file_shard.splitter import (
+    DEFAULT_CHUNK_MB,
+    get_file_hash
+)
 
 def main():
     parser = ArgumentParser(
-        description='Split, merge and verify file hashes.'
+        description='Git plugin for splitting large files into shards and merging them back.'
     )
-    parser.add_argument(
-        '--split',
-        metavar='FILE',
-        help='Split the specified file into parts'
+    subparsers = parser.add_subparsers(
+        dest='command',
+        help='Available commands'
     )
-    parser.add_argument(
-        '--merge',
-        metavar='BASE',
-        help='Merge file from parts BASE.partXXX'
+
+    # Scan commands.
+    scan_parser = subparsers.add_parser(
+        'scan',
+        help='Scan repository for large files and split them into shards'
     )
-    parser.add_argument(
-        '--hash',
-        metavar='FILE',
-        help='Compute file hash (SHA-256)'
+    scan_parser.add_argument(
+        '--repo',
+        default='.',
+        help='Repository root path (default: current directory)'
     )
-    parser.add_argument(
-        '--output',
-        metavar='FILE',
-        help='Output file name for merge (default: BASE.restored)'
-    )
-    parser.add_argument(
-        '--size',
+    scan_parser.add_argument(
+        '--threshold',
         type=int,
         default=DEFAULT_CHUNK_MB,
-        help='Part size in MB (default: 50)'
+        help=f'Size threshold in MB (default: {DEFAULT_CHUNK_MB})'
     )
-    parser.add_argument(
+    scan_parser.add_argument(
+        '--md5',
+        action='store_true',
+        help='Use MD5 instead of SHA-256'
+    )
+
+    # Restore commands.
+    restore_parser = subparsers.add_parser(
+        'restore',
+        help='Merge all shards back to original files'
+    )
+    restore_parser.add_argument(
+        '--repo',
+        default='.',
+        help='Repository root path (default: current directory)'
+    )
+    restore_parser.add_argument(
+        '--md5',
+        action='store_true',
+        help='Use MD5 instead of SHA-256'
+    )
+
+    # Split commands.
+    split_parser = subparsers.add_parser(
+        'split',
+        help='Split a single file into shards'
+    )
+    split_parser.add_argument(
+        'file',
+        help='File to split')
+    split_parser.add_argument(
+        '--repo',
+        default='.',
+        help='Repository root path (default: current directory)'
+    )
+    split_parser.add_argument(
+        '--threshold',
+        type=int,
+        default=DEFAULT_CHUNK_MB,
+        help=f'Part size in MB (default: {DEFAULT_CHUNK_MB})'
+    )
+    split_parser.add_argument(
+        '--md5',
+        action='store_true',
+        help='Use MD5 instead of SHA-256'
+    )
+
+    # Merge commands.
+    merge_parser = subparsers.add_parser(
+        'merge',
+        help='Merge shards for a specific file back'
+    )
+    merge_parser.add_argument(
+        'file',
+        help='Original file path'
+    )
+    merge_parser.add_argument(
+        '--repo',
+        default='.',
+        help='Repository root path (default: current directory)'
+    )
+    merge_parser.add_argument(
+        '--md5',
+        action='store_true',
+        help='Use MD5 instead of SHA-256'
+    )
+
+    # Hashing commands.
+    hash_parser = subparsers.add_parser(
+        'hash',
+        help='Compute file hash'
+    )
+    hash_parser.add_argument(
+        'file',
+        help='File to hash'
+    )
+    hash_parser.add_argument(
         '--md5',
         action='store_true',
         help='Use MD5 instead of SHA-256'
     )
 
     arguments = parser.parse_args()
+    algorithm = 'md5' if arguments.md5 else 'sha256'
 
-    # Select action.
-    if arguments.split:
-        split_file(arguments.split, arguments.size)
-    elif arguments.merge:
-        output = arguments.output if arguments.output else None
-        merged = merge_files(arguments.merge, output)
-        if merged:
-            # Compare hash with original.
-            if path.isfile(arguments.merge):
-                algorithm = 'md5' if arguments.md5 else 'sha256'
-                original_hash = get_file_hash(arguments.merge, algorithm)
-                marged_hash = get_file_hash(merged, algorithm)
-                print(f"Original hash ({algorithm.upper()}): {original_hash}")
-                print(f"Merged hash   ({algorithm.upper()}): {marged_hash}")
-                if original_hash == marged_hash:
-                    print("Hashes match.")
-                else:
-                    print("Hashes NOT match!")
-            else:
-                print("Source file was not found!")
-    elif arguments.hash:
-        algorithm = 'md5' if arguments.md5 else 'sha256'
-        hash = get_file_hash(arguments.hash, algorithm)
-        if hash is None:
-            print(f"Error: file '{arguments.hash}' was not found!")
+    if arguments.command == 'scan':
+        scan_repo(arguments.repo, arguments.threshold, algorithm)
+    elif arguments.command == 'restore':
+        restore_repo(arguments.repo, algorithm)
+    elif arguments.command == 'split':
+        split_single(arguments.file, arguments.repo, arguments.threshold, algorithm)
+    elif arguments.command == 'merge':
+        merge_single(arguments.file, arguments.repo, algorithm)
+    elif arguments.command == 'hash':
+        hash_value = get_file_hash(arguments.file, algorithm)
+        if hash_value is None:
+            print(f"Error: file '{arguments.file}' was not found!")
         else:
-            print(f"{algorithm.upper()} file hash '{arguments.hash}': {hash}")
+            print(f"{algorithm.upper()} file hash '{arguments.file}': {hash_value}")
     else:
         parser.print_help()
 
