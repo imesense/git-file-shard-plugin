@@ -17,13 +17,22 @@ from git_file_shard.splitter import (
 )
 from git_file_shard.gitignore import (
     add_to_gitignore,
+    get_ignored_dirs,
     is_in_gitignore
 )
 
 SHARDS_DIR = '.git-file-shards'
 
-# Directories to skip during scanning.
-SKIP_DIRS = {'.git', SHARDS_DIR, '.venv', '__pycache__', 'build', 'dist', '.pip'}
+def _build_skip_dirs(repo_root):
+    """
+    Build the set of directories to skip during scanning.
+    Always includes '.git' and SHARDS_DIR, plus all directory
+    entries found in .gitignore.
+    """
+
+    skip_dirs = {'.git', SHARDS_DIR}
+    skip_dirs |= get_ignored_dirs(repo_root)
+    return skip_dirs
 
 def _normalize_rel_path(rel_path):
     """
@@ -48,11 +57,12 @@ def scan_repo(repo_root='.', threshold_mb=DEFAULT_CHUNK_MB, algorithm='sha256'):
     repo_root = path.abspath(repo_root)
     threshold_bytes = threshold_mb * 1024 * 1024
 
+    skip_dirs = _build_skip_dirs(repo_root)
     large_files = []
 
     for root, dirs, files in os.walk(repo_root):
         # Skip unwanted directories in-place.
-        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
 
         for filename in files:
             file_path = path.join(root, filename)
