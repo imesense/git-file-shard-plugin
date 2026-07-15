@@ -1,0 +1,22 @@
+{
+    "folders": [
+        {
+            "name": "Git File Shard Plugin",
+            "path": "."
+        }
+    ],
+
+    "settings": {
+        "files.associations": {
+            "*.py": "python",
+            "*.spec": "python"
+        }
+    },
+
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "DavidAnson.vscode-markdownlint"
+        ]
+    }
+}
