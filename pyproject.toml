@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "git-file-shard"
+version = "0.1.0"
+description = "Git plugin for splitting large files into shards and merging them back"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.8"
+
+[project.scripts]
+git-file-shard = "git_file_shard.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
