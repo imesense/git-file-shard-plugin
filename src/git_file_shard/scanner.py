@@ -3,6 +3,7 @@ Repository scanning and restoring logic.
 """
 
 import os
+import shutil
 
 from os import path
 
@@ -51,6 +52,37 @@ def _get_shards_dir(repo_root, rel_path, file_hash):
 
     parts = rel_path.split('/')
     return path.join(repo_root, SHARDS_DIR, *parts, file_hash[:20])
+
+def _cleanup_old_shards(repo_root, rel_path, current_hash):
+    """
+    Remove old shard directories for a file whose hash has changed.
+    Only directories containing a manifest are removed, so non-shard
+    content is never touched.
+    """
+
+    file_shards_dir = path.join(repo_root, SHARDS_DIR, *rel_path.split('/'))
+
+    if not path.isdir(file_shards_dir):
+        return 0
+
+    current_hash_prefix = current_hash[:20]
+    removed = 0
+
+    for entry in os.listdir(file_shards_dir):
+        entry_path = path.join(file_shards_dir, entry)
+        if not path.isdir(entry_path):
+            continue
+
+        # Only remove directories that contain a manifest.
+        manifest_path = path.join(entry_path, MANIFEST_FILE)
+        if not path.isfile(manifest_path):
+            continue
+
+        if entry != current_hash_prefix:
+            shutil.rmtree(entry_path)
+            removed += 1
+
+    return removed
 
 def scan_repo(repo_root='.', threshold_mb=DEFAULT_CHUNK_MB, algorithm='sha256'):
     """
@@ -107,6 +139,11 @@ def scan_repo(repo_root='.', threshold_mb=DEFAULT_CHUNK_MB, algorithm='sha256'):
 
         output_dir = _get_shards_dir(repo_root, rel_path, file_hash)
 
+        # Remove old shards if the file hash has changed.
+        old_count = _cleanup_old_shards(repo_root, rel_path, file_hash)
+        if old_count > 0:
+            print(f"  Removed {old_count} stale shard version(s).")
+
         # Skip if already split with the same hash.
         manifest_path = path.join(output_dir, MANIFEST_FILE)
         if path.isfile(manifest_path):
@@ -140,6 +177,7 @@ def restore_repo(repo_root='.', algorithm='sha256'):
         return
 
     restored_count = 0
+    restored_files = set()
 
     for root, dirs, files in os.walk(shards_root):
         if MANIFEST_FILE not in files:
@@ -149,6 +187,11 @@ def restore_repo(repo_root='.', algorithm='sha256'):
         manifest = read_manifest(manifest_path)
 
         original_file = manifest['original_file']
+
+        # Skip if this file was already restored from another version.
+        if original_file in restored_files:
+            continue
+
         expected_hash = manifest['hash']
         output_path = path.join(
             repo_root, *_normalize_rel_path(original_file).split('/')
@@ -161,6 +204,7 @@ def restore_repo(repo_root='.', algorithm='sha256'):
             current_hash = get_file_hash(output_path, algorithm)
             if current_hash == expected_hash:
                 print(f"  Already restored (hash matches). Skipping.")
+                restored_files.add(original_file)
                 continue
 
         part_count = manifest['part_count']
@@ -192,6 +236,7 @@ def restore_repo(repo_root='.', algorithm='sha256'):
         else:
             print(f"  Warning: hash mismatch! Expected {expected_hash}, got {restored_hash}")
 
+        restored_files.add(original_file)
         restored_count += 1
 
     if restored_count == 0:
@@ -219,6 +264,11 @@ def split_single(file_path, repo_root='.', threshold_mb=DEFAULT_CHUNK_MB, algori
         return
 
     output_dir = _get_shards_dir(repo_root, rel_path, file_hash)
+
+    # Remove old shards if the file hash has changed.
+    old_count = _cleanup_old_shards(repo_root, rel_path, file_hash)
+    if old_count > 0:
+        print(f"  Removed {old_count} stale shard version(s).")
 
     manifest_path = path.join(output_dir, MANIFEST_FILE)
     if path.isfile(manifest_path):
