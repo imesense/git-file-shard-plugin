@@ -18,6 +18,7 @@ a = Analysis(
         'git_file_shard.splitter',
         'git_file_shard.scanner',
         'git_file_shard.gitignore',
+        'git_file_shard.gitattributes',
     ],
     hookspath=[],
     hooksconfig={},

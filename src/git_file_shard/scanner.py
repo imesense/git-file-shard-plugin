@@ -20,6 +20,9 @@ from git_file_shard.gitignore import (
     get_ignored_dirs,
     is_in_gitignore
 )
+from git_file_shard.gitattributes import (
+    is_file_shards_auto
+)
 
 SHARDS_DIR = '.git-file-shards'
 
@@ -77,6 +80,17 @@ def scan_repo(repo_root='.', threshold_mb=DEFAULT_CHUNK_MB, algorithm='sha256'):
 
     if not large_files:
         print("No files exceeding the size threshold found.")
+        return
+
+    # Keep only files marked with file-shards=auto in .gitattributes.
+    large_files = [
+        (rel_path, abs_path, file_size)
+        for rel_path, abs_path, file_size in large_files
+        if is_file_shards_auto(repo_root, rel_path)
+    ]
+
+    if not large_files:
+        print("No files with file-shards=auto exceeding the size threshold found.")
         return
 
     print(f"Found {len(large_files)} file(s) exceeding {threshold_mb} MB:")
