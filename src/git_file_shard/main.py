@@ -123,6 +123,10 @@ def main():
     )
 
     arguments = parser.parse_args()
+    if not arguments.command:
+        parser.print_help()
+        return
+
     algorithm = 'md5' if arguments.md5 else 'sha256'
 
     if arguments.command == 'scan':
@@ -139,8 +143,6 @@ def main():
             print(f"Error: file '{arguments.file}' was not found!")
         else:
             print(f"{algorithm.upper()} file hash '{arguments.file}': {hash_value}")
-    else:
-        parser.print_help()
 
 if __name__ == "__main__":
     main()
