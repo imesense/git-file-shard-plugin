@@ -28,14 +28,19 @@ SHARDS_DIR = '.git-file-shards'
 
 def _build_skip_dirs(repo_root):
     """
-    Build the set of directories to skip during scanning.
+    Build skip-directory data for scanning.
+    Returns a tuple of:
+    - basename_dirs: set of directory names to skip at any depth
+    - anchored_dirs: set of root-relative paths to skip
+
     Always includes '.git' and SHARDS_DIR, plus all directory
     entries found in .gitignore.
     """
 
-    skip_dirs = {'.git', SHARDS_DIR}
-    skip_dirs |= get_ignored_dirs(repo_root)
-    return skip_dirs
+    basename_dirs = {'.git', SHARDS_DIR}
+    gitignore_basenames, gitignore_anchored = get_ignored_dirs(repo_root)
+    basename_dirs |= gitignore_basenames
+    return basename_dirs, gitignore_anchored
 
 def _normalize_rel_path(rel_path):
     """
@@ -91,12 +96,20 @@ def scan_repo(repo_root='.', threshold_mb=DEFAULT_CHUNK_MB, algorithm='sha256'):
     repo_root = path.abspath(repo_root)
     threshold_bytes = threshold_mb * 1024 * 1024
 
-    skip_dirs = _build_skip_dirs(repo_root)
+    skip_basename, skip_anchored = _build_skip_dirs(repo_root)
     large_files = []
 
     for root, dirs, files in os.walk(repo_root):
-        # Skip unwanted directories in-place.
-        dirs[:] = [d for d in dirs if d not in skip_dirs]
+        # Skip unwanted directories by basename (any depth).
+        dirs[:] = [d for d in dirs if d not in skip_basename]
+
+        # Skip unwanted directories by anchored path (root-relative).
+        if skip_anchored:
+            rel_root = _normalize_rel_path(path.relpath(root, repo_root))
+            dirs[:] = [
+                d for d in dirs
+                if _normalize_rel_path(path.join(rel_root, d)) not in skip_anchored
+            ]
 
         for filename in files:
             file_path = path.join(root, filename)
