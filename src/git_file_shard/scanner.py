@@ -210,6 +210,10 @@ def restore_repo(repo_root='.', algorithm='sha256'):
         total_bytes = 0
         missing = False
 
+        output_dir = path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+
         with open(output_path, 'wb') as out:
             for i in range(1, part_count + 1):
                 part_path = path.join(root, f'part-{i}')
