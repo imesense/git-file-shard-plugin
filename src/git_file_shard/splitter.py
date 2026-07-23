@@ -56,6 +56,10 @@ def merge_file(shards_dir, output_path):
     part_number = 1
     total_bytes = 0
 
+    output_dir = path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
     with open(output_path, 'wb') as out:
         while True:
             part_path = path.join(shards_dir, f'part-{part_number}')
