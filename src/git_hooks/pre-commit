@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Split large files into shards before committing.
+git file-shard scan
