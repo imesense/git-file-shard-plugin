@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# Restore original files from shards after merge.
+git file-shard restore
