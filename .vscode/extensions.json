@@ -4,6 +4,7 @@
         "DavidAnson.vscode-markdownlint",
         "editorconfig.editorconfig",
         "tamasfe.even-better-toml",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "chouzz.vscode-innosetup"
     ]
 }

@@ -9,7 +9,11 @@
     "settings": {
         "files.associations": {
             "*.py": "python",
-            "*.spec": "python"
+            "*.spec": "python",
+
+            "post-checkout": "shellscript",
+            "post-merge": "shellscript",
+            "pre-commit": "shellscript"
         }
     },
 
@@ -19,7 +23,8 @@
             "DavidAnson.vscode-markdownlint",
             "editorconfig.editorconfig",
             "tamasfe.even-better-toml",
-            "github.vscode-github-actions"
+            "github.vscode-github-actions",
+            "chouzz.vscode-innosetup"
         ]
     }
 }
