@@ -5,10 +5,11 @@
 Thumbs.db
 
 # Build results
-build/
-dist/
+/bin
+/build
+/dist
 
 # Python cache and settings
-.pip/
-.venv/
-__pycache__/
+/.pip
+/.venv
+__pycache__
