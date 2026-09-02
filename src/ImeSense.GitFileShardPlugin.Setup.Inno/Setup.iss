@@ -36,6 +36,3 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Source: "..\..\dist\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
-
-[Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
