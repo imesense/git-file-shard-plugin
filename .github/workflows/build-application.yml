@@ -1,0 +1,112 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+
+name: "Build application"
+
+on:
+    push:
+        branches:
+            - "**"
+        paths:
+            - ".github/workflows/**"
+            - "src/**"
+            - "*.py"
+            - "*.spec"
+    pull_request:
+        branches:
+            - "**"
+        paths:
+            - ".github/workflows/**"
+            - "src/**"
+            - "*.py"
+            - "*.spec"
+
+defaults:
+    run:
+        shell: pwsh
+
+jobs:
+    build-application:
+        name: 'Build application'
+
+        strategy:
+            matrix:
+                system:
+                    - ubuntu-24.04
+            fail-fast: false
+
+        runs-on: ${{ matrix.system }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: '3.10'
+
+            - name: Build modules
+              run: |
+                  python `
+                      -m compileall `
+                      -q `
+                          ${{ github.workspace }}/src
+                  python `
+                      -m py_compile `
+                      ${{ github.workspace }}/git-file-shard.spec
+
+    publish-application:
+        name: "Publish application"
+
+        needs:
+            - build-application
+
+        strategy:
+            matrix:
+                system:
+                    - windows-2022
+                    - ubuntu-24.04
+
+        runs-on: ${{ matrix.system }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: '3.10'
+
+            - name: Cache dependencies
+              uses: actions/cache@v6
+              with:
+                  key: Application-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+                  restore-keys: |
+                      Application-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+                      Application-${{ hashFiles('**/requirements*.txt') }}
+                      Application-
+                  path: |
+                      ${{ github.workspace }}/.pip/
+
+            - name: Setup dependencies
+              run: |
+                  pip install `
+                      -r ${{ github.workspace }}/requirements.txt `
+                      --cache-dir ${{ github.workspace }}/.pip/
+
+            - name: Pack application
+              run: |
+                  pyinstaller `
+                      ${{ github.workspace }}/git-file-shard.spec
+
+            - name: Upload application
+              uses: actions/upload-artifact@v7
+              with:
+                  name: ${{ github.event.repository.name }}-build-${{ matrix.system }}-${{ github.sha }}
+                  path: |
+                      ${{ github.workspace }}/dist/
