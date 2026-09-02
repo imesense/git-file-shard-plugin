@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "*.py": "python",
-        "*.spec": "python"
+        "*.spec": "python",
+
+        "post-checkout": "shellscript",
+        "post-merge": "shellscript",
+        "pre-commit": "shellscript"
     }
 }
