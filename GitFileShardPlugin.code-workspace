@@ -16,7 +16,10 @@
     "extensions": {
         "recommendations": [
             "ms-python.python",
-            "DavidAnson.vscode-markdownlint"
+            "DavidAnson.vscode-markdownlint",
+            "editorconfig.editorconfig",
+            "tamasfe.even-better-toml",
+            "github.vscode-github-actions"
         ]
     }
 }
