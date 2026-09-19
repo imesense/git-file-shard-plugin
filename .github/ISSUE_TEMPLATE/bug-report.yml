@@ -1,22 +1,29 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-issue-forms.json
 
 name: Bug report
-description: Create bug report.
+description: Create bug report
 labels:
     - "bug"
 
 body:
     # Bug information
-    - type: textarea
+    - type: input
       id: version
       attributes:
           label: Version
+          description: >
+              Project version or commit hash.
+      validations:
+          required: true
+    - type: textarea
+      id: environment
+      attributes:
+          label: Environment
           description: >
               Fields to create a complete report.
           placeholder: |
               - Computer characteristics.
               - Operating system.
-              - Project version.
       validations:
           required: true
     - type: textarea
