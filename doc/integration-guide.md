@@ -86,51 +86,19 @@ chmod +x .git/hooks/pre-commit .git/hooks/post-checkout .git/hooks/post-merge
 
 ### How hooks work together
 
-```text
-  ┌──────────────┐
-  │  git commit  │
-  └──────┬───────┘
-         │
-         ▼
-  ┌────────────────────┐
-  │  pre-commit hook   │
-  │  git file-shard    │
-  │      scan          │
-  │                    │
-  │  - Finds files     │
-  │    > 50 MB with    │
-  │    file-shards=auto│
-  │  - Splits into     │
-  │    shards          │
-  │  - Adds originals  │
-  │    to .gitignore   │
-  └────────┬───────────┘
-           │
-           ▼
-  ┌────────────────────┐
-  │  Only shards are   │
-  │  committed;        │
-  │  original files    │
-  │  remain in working │
-  │  tree              │
-  └────────────────────┘
+```mermaid
+flowchart TD
+    commit["git commit"] --> precommit["pre-commit hook<br/>git file-shard scan"]
+    precommit --> scan1["Finds files > 50 MB<br/>with file-shards=auto"]
+    scan1 --> scan2["Splits into shards"]
+    scan2 --> scan3["Adds originals to .gitignore"]
+    scan3 --> result["Only shards are committed;<br/>original files remain in working tree"]
 
-  ┌──────────────┐     ┌──────────────┐
-  │ git checkout │     │  git merge   │
-  └──────┬───────┘     └──────┬───────┘
-         │                    │
-         ▼                    ▼
-  ┌────────────────────┐
-  │ post-checkout /    │
-  │ post-merge hook    │
-  │  git file-shard    │
-  │      restore       │
-  │                    │
-  │  - Reads manifests │
-  │  - Merges shards   │
-  │    back to files   │
-  │  - Verifies hash   │
-  └────────────────────┘
+    checkout["git checkout"] --> restore
+    merge["git merge"] --> restore["post-checkout / post-merge hook<br/>git file-shard restore"]
+    restore --> res1["Reads manifests"]
+    res1 --> res2["Merges shards back to files"]
+    res2 --> res3["Verifies hash"]
 ```
 
 ## Git attributes configuration
