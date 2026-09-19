@@ -1,0 +1,66 @@
+task:
+  id: add-innosetup-installer
+  capability: innosetup-installer
+  created: 2026-09-19
+  status: archived (merged into openspec/specs/innosetup-installer/spec.md)
+  goal: "Windows-установщик для git-file-shard на Inno Setup 7: пакетирование PyInstaller-бинарника, опциональная задача добавления {app}\\bin в PATH с удалением при деинсталляции"
+  workflow: "OpenSpec (proposal + design + tasks + delta spec), файлы ведутся вручную — openspec CLI в окружении отсутствует"
+
+environment:
+  os: windows
+  cwd: корень репозитория git-file-shard-plugin
+  shell: "PowerShell (основной); python/npm/node в PATH отсутствуют, venv создаётся внутри проекта"
+
+stack:
+  installer: Inno Setup 7 (ISCC.exe)
+  payload: dist/git-file-shard.exe (PyInstaller, Python 3.8+)
+  pascal_script: секция [Code] в Setup.iss
+  locales: english + russian (Locales/Options.eng.isl, Locales/Options.rus.isl)
+
+conventions[7]:
+  "Setup.iss: отступ 4 пробела"
+  "Pascal-комментарий { ... } не может содержать Inno-константы ({app} закрывает комментарий)"
+  "каждое пользовательское сообщение задачи — в ОБОИХ локалях (eng + rus)"
+  "реестр через HKA-рут: admin -> HKLM, иначе HKCU"
+  "doc-комментарии функций [Code] в стиле { ... } после сигнатуры"
+  "ветка по умолчанию default, PR-шаблон с чеклистом ручного тестирования"
+  "локальный тест = ручная установка/деинсталляция (галочка PATH проверена пользователем)"
+
+commands:
+  build: ISCC.exe src/ImeSense.GitFileShardPlugin.Setup.Inno/Setup.iss -> bin/GitFileShardPlugin.exe
+  compile_check: ISCC.exe --output=no src/ImeSense.GitFileShardPlugin.Setup.Inno/Setup.iss
+  payload_build: pyinstaller git-file-shard.spec --noconfirm -> dist/git-file-shard.exe
+
+inno_engine:
+  registry:
+    root: HKA
+    subkey: System\CurrentControlSet\Control\Session Manager\Environment
+    read: RegQueryStringValue (REG_SZ и REG_EXPAND_SZ)
+    write: RegWriteExpandStringValue (сохраняет %SystemRoot% и т.п.)
+  messages:
+    SendMessageTimeout в движке НЕ зарегистрирована
+    SendNotifyMessage ненадёжна для WM_SETTINGCHANGE (lParam-строка может освободиться до чтения)
+    решение: external 'SendMessageTimeoutW@user32.dll stdcall'
+    параметры: HWND_BROADCAST, WM_SETTINGCHANGE=$001A, SMTO_ABORTIFHUNG=$0002, таймаут 5000
+    доступные из движка[6]: SendMessage, PostMessage, SendNotifyMessage, SendBroadcastMessage, PostBroadcastMessage, SendBroadcastNotifyMessage
+  events[2]{event,step,purpose}:
+    CurStepChanged,ssPostInstall,"UpdatePath(True) при выбранной задаче + RefreshEnvironment"
+    CurUninstallStepChanged,usUninstall,"UpdatePath(False), пока каталог приложения существует"
+  path_logic:
+    split: "StringSplit(Path, [PathSeparator], stExcludeEmpty)"
+    dedup: SameText + AddBackslash (регистронезависимо, нормализация слеша)
+    idempotency: запись только если новое значение <> старого
+  task: "addtopath без Flags: unchecked -> включена по умолчанию; проверка WizardIsTaskSelected('addtopath')"
+
+gotchas[3]:
+  ISCC --output=no всё равно удаляет старый выходной файл из OutputDir -> после проверки нужна пересборка
+  "короткая опция /O- не работает ('You may not specify more than one script filename'); рабочий порядок — опции ПОСЛЕ имени скрипта"
+  "константа {app} внутри { }-комментария обрывает комментарий"
+
+references:
+  spec: openspec/specs/innosetup-installer/spec.md
+  delta: openspec/changes/add-innosetup-installer/specs/innosetup-installer/spec.md
+  artifacts: openspec/changes/add-innosetup-installer/ (proposal, design, tasks)
+  script: src/ImeSense.GitFileShardPlugin.Setup.Inno/Setup.iss
+  locales: src/ImeSense.GitFileShardPlugin.Setup.Inno/Locales/
+  commits: 3a20e98 -> b881a55 -> 6909e5b
