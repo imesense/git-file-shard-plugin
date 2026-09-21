@@ -1,0 +1,65 @@
+task:
+  id: add-wix-installer
+  capability: wix-installer
+  created: 2026-09-21
+  status: archived (merged into openspec/specs/wix-installer/spec.md)
+  goal: "MSI-установщик для git-file-shard на WiX Toolset 7: пакетирование PyInstaller-бинарника, кастомный диалог опций с чекбоксом добавления bin в PATH через Environment-таблицу MSI"
+  workflow: "OpenSpec (proposal + design + tasks + delta spec), файлы ведутся вручную — openspec CLI в окружении отсутствует"
+
+environment:
+  os: windows
+  cwd: корень репозитория git-file-shard-plugin
+  shell: "bash (Git Bash) для агента; dotnet установлен, но НЕ в PATH bash"
+  dotnet: "dotnet SDK (8/9/10) доступен вне PATH bash — вызывать по полному пути установки"
+
+stack:
+  installer: WiX Toolset 7 (WixToolset.Sdk/7.0.0, NuGet)
+  ui_ext: WixToolset.UI.wixext/7.0.0 (NuGet PackageReference в .wixproj)
+  payload: dist/git-file-shard.exe (PyInstaller, Python 3.8+)
+  ui_set: WixUI_InstallDir (через <ui:WixUI InstallDirectory="INSTALLFOLDER" />)
+  locales: english + russian (Package.en-us.wxl, Package.ru-ru.wxl, Codepage=1251)
+  sources: "локальный клон исходников WiX (см. wix_sources): wixlib с диалогами — src/ext/UI/wixlib"
+
+conventions[6]:
+  "wixproj: PackageReference на WixToolset.UI.wixext, OutputName=GitFileShardPlugin"
+  "WiX v4+ авторинг: <Package> вместо <Product>, схема http://wixtoolset.org/schemas/v4/wxs"
+  "каждая пользовательская строка — в ОБОИХ локалях (en-us + ru-ru)"
+  "MSI собирается через dotnet build .wixproj (wix.exe отдельно искать не нужно)"
+  "payload обязан существовать до сборки: dist/git-file-shard.exe, иначе WIX0103"
+  "ветка по умолчанию default; локальный тест = ручная установка/деинсталляция"
+
+commands:
+  build: dotnet build src/ImeSense.GitFileShardPlugin.Setup.Wix/ImeSense.GitFileShardPlugin.Setup.Wix.wixproj -> bin/GitFileShardPlugin.msi
+  payload_build: pyinstaller git-file-shard.spec --noconfirm -> dist/git-file-shard.exe
+
+msi_engine:
+  path:
+    approach: "MSI Environment-таблица вместо ручного кода (в отличие от Inno Setup)"
+    component: "Component Id=AddToPath Directory=INSTALLBIN Guid=F1CAFAE6-4997-4D72-A17B-9B5E8A45ADA3 Condition=ADDTOPATH"
+    entry: "Environment Id=PathEntry Name=PATH Value=[INSTALLBIN] Part=last Action=set System=yes"
+    idempotency: "гарантируется самим MSI: append на install, remove на uninstall"
+    property: "ADDTOPATH Secure=yes Value=1 (чекбокс по умолчанию включён; Secure обязателен для переживания elevation)"
+  ui_sequence:
+    builtin: "WixUI_InstallDir: WelcomeDlg -> LicenseAgreementDlg -> InstallDirDlg -> VerifyReadyDlg"
+    custom: "OptionsDlg вставлен между InstallDirDlg и VerifyReadyDlg (только NOT Installed)"
+    checkbox: "Control Type=CheckBox Property=ADDTOPATH CheckBoxValue=1 — прямая привязка к свойству, кастомные экшены не нужны"
+
+gotchas[4]:
+  "ГЛАВНЫЙ ГОТЧА: встроенный WixUI_InstallDir публикует БЕЗУСЛОВНЫЙ NewDialog->VerifyReadyDlg с Order=4 на InstallDirDlg/Next; MSI выполняет ControlEvents по возрастанию Order, при нескольких NewDialog побеждает ПОСЛЕДНИЙ -> свой переход должен иметь Order=5, иначе OptionsDlg молча никогда не откроется (WiX при этом собирается без ошибок!)"
+  "VerifyReadyDlg/Back: встроенный переход -> InstallDirDlg имеет Order=1 -> свой переход на OptionsDlg должен быть Order=2"
+  "Order с одинаковым значением на одном контроле = недетерминированный победитель, не полагаться"
+  "dotnet не в PATH bash-окружения: вызывать по полному пути установки dotnet"
+
+debug_story:
+  symptom: "страница OptionsDlg не отображалась, PATH-опция недоступна визуально"
+  research: "исходники WiX (src/ext/UI/wixlib/WixUI_InstallDir.wxs) показали встроенный Publish InstallDirDlg/Next NewDialog VerifyReadyDlg Order=4 без Condition"
+  root_cause: "кастомный Publish OptionsDlg имел Order=2 < 4, встроенный переход перебивал его (last NewDialog wins)"
+  fix: "Order=5 для InstallDirDlg/Next->OptionsDlg, Order=2 для VerifyReadyDlg/Back->OptionsDlg; лишние Publish для Installed-ветки удалены (встроенные уже покрывают)"
+  verification: "dotnet build без WiX-ошибок (только WIX0103 по отсутствующему payload до сборки PyInstaller); ручная установка подтверждена пользователем: диалог виден, PATH прописывается"
+
+references:
+  delta: openspec/changes/add-wix-installer/specs/wix-installer/spec.md
+  artifacts: openspec/changes/add-wix-installer/ (proposal, design, tasks)
+  project: src/ImeSense.GitFileShardPlugin.Setup.Wix/
+  wix_sources: "локальный клон исходников WiX Toolset (репозиторий github.com/wixtoolset/wix): src/ext/UI/wixlib — эталон диалогов, UICompiler.cs — резолв WixUI_Id_<arch>"
+  related: openspec/specs/innosetup-installer/spec.md (EXE-инсталлер, параллельная поставка)

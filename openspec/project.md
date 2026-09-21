@@ -14,6 +14,10 @@
   (`src/ImeSense.GitFileShardPlugin.Setup.Inno/`). Implemented and archived:
   `changes/archive/2026-09-19-add-innosetup-installer/` (source commits
   `3a20e98` → `b881a55` → `6909e5b`, 2026-09-03/04).
+- `wix-installer` — MSI package built with WiX Toolset 7
+  (`src/ImeSense.GitFileShardPlugin.Setup.Wix/`). Implemented and archived:
+  `changes/archive/2026-09-21-add-wix-installer/` (2026-09-21); options
+  dialog and PATH registration verified by manual install.
 
 ## Explicitly Out of Scope
 

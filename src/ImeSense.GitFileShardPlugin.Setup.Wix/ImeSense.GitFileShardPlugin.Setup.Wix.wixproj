@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project Sdk="ImeSense.WixToolset.Sdk/7.0.0">
+    <PropertyGroup>
+        <OutputName>GitFileShardPlugin</OutputName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ImeSense.WixToolset.UI.wixext" Version="7.0.0" />
+    </ItemGroup>
+</Project>

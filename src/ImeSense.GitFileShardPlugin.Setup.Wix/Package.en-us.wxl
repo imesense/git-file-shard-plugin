@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<WixLocalization
+    xmlns="http://wixtoolset.org/schemas/v4/wxl"
+    Culture="en-US">
+    <String Id="DowngradeError" Value="A newer version of [ProductName] is already installed." />
+    <String Id="FeatureMainTitle" Value="Git File Shard Plugin" />
+    <String Id="FeatureMainDescription" Value="Installs application executable and basic documentation." />
+    <String Id="OptionsDlgTitle" Value="Optional Options" />
+    <String Id="OptionsDlgDescription" Value="Choose additional setup options." />
+    <String Id="TaskAddToPathDescription" Value="Add program folder to PATH" />
+</WixLocalization>
