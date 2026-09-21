@@ -8,8 +8,17 @@ Thumbs.db
 /bin
 /build
 /dist
+/obj
+
+# Visual Studio cache and settings
+/.vs
+*.suo
+*.user
 
 # Python cache and settings
 /.pip
 /.venv
 __pycache__
+
+# NuGet cache
+/.nuget

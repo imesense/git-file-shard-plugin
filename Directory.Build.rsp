@@ -1,0 +1,7 @@
+# Common MSBuild switches applied to every build in this directory tree.
+
+# Suppress MSBuild and .NET version banner.
+-nologo
+
+# Enable classic sequential console logger.
+-tl:false

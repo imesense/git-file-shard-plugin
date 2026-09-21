@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Wix
+    xmlns="http://wixtoolset.org/schemas/v4/wxs"
+    xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+    <Package
+        Name="ImeSense Git File Shard Plugin"
+        Manufacturer="ImeSense"
+        Version="0.1.0"
+        UpgradeCode="FF816155-5EE5-4543-A55B-5EC56D7A6561"
+        Scope="perMachineOrUser"
+        Compressed="yes">
+        <SummaryInformation Description="Git plugin that splits large files into shards and merges them back" />
+        <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+
+        <Property Id="ADDTOPATH" Secure="yes" Value="1" />
+
+        <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+
+        <MediaTemplate EmbedCab="yes" />
+
+        <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+
+        <Feature Id="Main" Title="!(loc.FeatureMainTitle)" Description="!(loc.FeatureMainDescription)" AllowAbsent="no">
+            <ComponentGroupRef Id="ApplicationComponents" />
+            <ComponentGroupRef Id="AddToPathComponents" />
+        </Feature>
+
+        <UI>
+            <Dialog Id="OptionsDlg" Width="370" Height="270" Title="!(loc.OptionsDlgTitle)">
+                <Control Id="Description" Type="Text" X="25" Y="23" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.OptionsDlgDescription)" />
+                <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.OptionsDlgTitle)" />
+                <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+                <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+                <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+                <Control Id="AddToPathCheckbox" Type="CheckBox" X="20" Y="60" Width="290" Height="17" Property="ADDTOPATH" CheckBoxValue="1" Text="!(loc.TaskAddToPathDescription)" />
+                <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />
+                <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)" />
+                <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+                    <Publish Event="SpawnDialog" Value="CancelDlg" />
+                </Control>
+            </Dialog>
+
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="OptionsDlg" Order="5" Condition="NOT Installed" />
+            <Publish Dialog="OptionsDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1" />
+            <Publish Dialog="OptionsDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="1" />
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="OptionsDlg" Order="2" Condition="NOT Installed" />
+        </UI>
+    </Package>
+</Wix>

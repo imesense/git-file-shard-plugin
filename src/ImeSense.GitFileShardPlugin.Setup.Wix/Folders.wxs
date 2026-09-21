@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <StandardDirectory Id="ProgramFiles6432Folder">
+            <Directory Id="INSTALLFOLDER" Name="ImeSense\Git File Shard Plugin">
+                <Directory Id="INSTALLBIN" Name="bin" />
+            </Directory>
+        </StandardDirectory>
+    </Fragment>
+</Wix>

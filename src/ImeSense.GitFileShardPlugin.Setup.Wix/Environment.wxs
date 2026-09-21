@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <ComponentGroup Id="AddToPathComponents">
+            <Component Id="AddToPath" Directory="INSTALLBIN" Guid="F1CAFAE6-4997-4D72-A17B-9B5E8A45ADA3" Condition="ADDTOPATH">
+                <CreateFolder />
+
+                <Environment Id="PathEntry" Name="PATH" Value="[INSTALLBIN]" Part="last" Action="set" System="yes" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

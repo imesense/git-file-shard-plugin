@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+    <Fragment>
+        <ComponentGroup Id="ApplicationComponents">
+            <Component Directory="INSTALLFOLDER">
+                <File Id="ReadmeMd" Source="..\..\README.md" />
+            </Component>
+            <Component Directory="INSTALLFOLDER">
+                <File Id="LicenseTxt" Source="..\..\LICENSE.txt" />
+            </Component>
+            <Component Directory="INSTALLBIN">
+                <File Id="GitFileShardExe" Source="..\..\dist\git-file-shard.exe" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>
