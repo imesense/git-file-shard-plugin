@@ -36,6 +36,12 @@
 - [x] 3.6 Add `util/build-pkg-arm64.sh` and `util/build-pkg-x86_64.sh`
       wrappers (version as first argument, extra arguments forwarded,
       `.venv` activated when present)
+- [x] 3.7 Decouple packaging from bundling: `build.sh` no longer runs
+      PyInstaller or requires `.venv`; the prebuilt `dist/git-file-shard`
+      payload is a precondition (drop `--skip-payload`)
+- [x] 3.8 Add the `--plain-name` option producing
+      `bin/GitFileShardPlugin.pkg` (no version/architecture in the file
+      name; both still recorded inside the package)
 
 ## 4. Verification
 
@@ -43,6 +49,9 @@
 - [x] 4.2 Local build produces `bin/GitFileShardPlugin.v0.1.0.arm64.pkg`
       via `util/build-pkg-arm64.sh 0.1.0`
 - [x] 4.2.1 Missing `--version` / `--arch` fail with usage errors
+- [x] 4.2.2 Missing `dist/git-file-shard` fails with a clear
+      bundle-first error; `--plain-name` produces
+      `bin/GitFileShardPlugin.pkg`
 - [x] 4.3 Manual install (user): files land in
       `/Library/Application Support/ImeSense/Git File Shard Plugin/`,
       symlink works, `git file-shard --help` runs

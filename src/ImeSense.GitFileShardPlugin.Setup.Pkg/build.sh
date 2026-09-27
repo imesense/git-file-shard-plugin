@@ -1,13 +1,13 @@
 #!/bin/bash
 # Build script for the macOS distribution package of the git-file-shard plugin.
 #
-# Stages the PyInstaller payload, builds a component package with pkgbuild,
-# wraps it into a distribution package with productbuild and optionally signs
-# it with productsign. Run pyinstaller from the activated virtual environment
-# (.venv) or make sure it is available on PATH.
+# Stages the prebuilt plugin binary from dist/, builds a component package
+# with pkgbuild, wraps it into a distribution package with productbuild and
+# optionally signs it with productsign. Bundling the plugin (PyInstaller) is
+# a separate step that must run beforehand and produce dist/git-file-shard.
 #
 # Usage:
-#     build.sh --version <version> --arch arm64|x86_64 [--sign <identity>] [--skip-payload]
+#     build.sh --version <version> --arch arm64|x86_64 [--sign <identity>] [--plain-name]
 
 set -euo pipefail
 
@@ -22,14 +22,14 @@ INSTALL_LOCATION="/Library/Application Support/$PUBLISHER/$APP_NAME"
 VERSION=''
 ARCH=''
 SIGN_IDENTITY=''
-SKIP_PAYLOAD='false'
+PLAIN_NAME='false'
 
 DIST_DIR="$REPO_ROOT/dist"
 BUILD_DIR="$REPO_ROOT/build/pkg"
 OUTPUT_DIR="$REPO_ROOT/bin"
 
 usage() {
-    echo "Usage: $0 --version <version> --arch arm64|x86_64 [--sign <identity>] [--skip-payload]"
+    echo "Usage: $0 --version <version> --arch arm64|x86_64 [--sign <identity>] [--plain-name]"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -61,8 +61,8 @@ while [ "$#" -gt 0 ]; do
             SIGN_IDENTITY="$2"
             shift 2
             ;;
-        --skip-payload)
-            SKIP_PAYLOAD='true'
+        --plain-name)
+            PLAIN_NAME='true'
             shift
             ;;
         -h|--help)
@@ -106,30 +106,19 @@ for tool in pkgbuild productbuild codesign lipo; do
     fi
 done
 
-# Build the PyInstaller payload for the requested architecture. The target
-# architecture is passed through the GIT_FILE_SHARD_TARGET_ARCH environment
-# variable because spec-file builds ignore the --target-arch command line
-# option. Cross-building requires a Python interpreter that supports the
-# target architecture (a universal2 build for the other architecture).
-if [ "$SKIP_PAYLOAD" != 'true' ]; then
-    if ! command -v pyinstaller >/dev/null 2>&1; then
-        echo 'Error: pyinstaller was not found; activate the .venv virtual environment first.' >&2
-        exit 1
-    fi
-    (cd "$REPO_ROOT" && GIT_FILE_SHARD_TARGET_ARCH="$ARCH" pyinstaller git-file-shard.spec --noconfirm)
-fi
-
+# The plugin binary is bundled in a separate step (PyInstaller) and must
+# already exist in dist/.
 PAYLOAD="$DIST_DIR/git-file-shard"
 if [ ! -f "$PAYLOAD" ]; then
-    echo "Error: payload '$PAYLOAD' was not found; build it first or drop --skip-payload." >&2
+    echo "Error: payload '$PAYLOAD' was not found; bundle the plugin first." >&2
     exit 1
 fi
 
-# Verify the payload architecture so a wrong interpreter cannot slip through.
+# Verify the payload architecture so a wrong bundle cannot slip through.
 ACTUAL_ARCH="$(lipo -info "$PAYLOAD" | awk '{ print $NF }')"
 if [ "$ACTUAL_ARCH" != "$ARCH" ]; then
     echo "Error: payload architecture is '$ACTUAL_ARCH' but '$ARCH' was requested." >&2
-    echo 'Cross-build with a Python interpreter that supports the target architecture (universal2 for the other one).' >&2
+    echo 'Rebundle the plugin for the requested architecture (a universal2 Python interpreter for the other one).' >&2
     exit 1
 fi
 
@@ -157,7 +146,13 @@ pkgbuild \
     --scripts "$SCRIPT_DIR/Scripts" \
     "$COMPONENT_PKG"
 
-PRODUCT_PKG="$OUTPUT_DIR/GitFileShardPlugin.v$VERSION.$ARCH.pkg"
+# By default the output name embeds the version and the architecture; the
+# --plain-name option drops both (plain GitFileShardPlugin.pkg).
+if [ "$PLAIN_NAME" = 'true' ]; then
+    PRODUCT_PKG="$OUTPUT_DIR/GitFileShardPlugin.pkg"
+else
+    PRODUCT_PKG="$OUTPUT_DIR/GitFileShardPlugin.v$VERSION.$ARCH.pkg"
+fi
 mkdir -p "$OUTPUT_DIR"
 productbuild \
     --distribution "$SCRIPT_DIR/distribution.xml" \
