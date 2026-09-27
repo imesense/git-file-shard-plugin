@@ -81,29 +81,31 @@ There is no Apple Developer account, so signing must be optional:
   `productsign --sign <identity>` for a Developer ID Installer identity,
   ready for when an account exists. Notarization remains a follow-up.
 
-### D5. Configurable architecture and explicit version
+### D5. Explicit version, configurable architecture, separate bundling
 
 `build.sh` takes the target architecture (`--arch arm64|x86_64`) and the
 package version (`--version <version>`) strictly as command line arguments,
 with no defaults: the version and architecture of a distributable package
-must never be guessed. The architecture is passed to PyInstaller through
-the `GIT_FILE_SHARD_TARGET_ARCH` environment variable (spec-file builds
-ignore `--target-arch`) and verified against the payload with `lipo`.
-Cross-building single architectures requires a Python interpreter that
-supports the target architecture (a universal2 build for the other
-architecture); the script fails early with a clear message otherwise.
+must never be guessed. Bundling the plugin (PyInstaller) is a separate
+step that runs beforehand and produces `dist/git-file-shard`; `build.sh`
+only packages the prebuilt binary, verifies its architecture with `lipo`
+and fails early with a clear message when the payload is missing or built
+for the wrong architecture. Cross-bundling single architectures requires
+a Python interpreter that supports the target architecture (a universal2
+build for the other architecture).
 
 The output name embeds the version and the architecture before the
 extension (`GitFileShardPlugin.v0.1.0.arm64.pkg`) so artifacts for
-different versions and architectures can coexist in `bin/`. The
+different versions and architectures can coexist in `bin/`; the
+`--plain-name` option produces `bin/GitFileShardPlugin.pkg` instead while
+the package still records the version and architecture inside. The
 `distribution.xml` carries no hardcoded version; `productbuild` fills the
 `pkg-ref` version from the component package built with
 `pkgbuild --version`.
 
 Convenience wrappers `util/build-pkg-arm64.sh` and `util/build-pkg-x86_64.sh`
-take the version as their first argument, forward any extra arguments to
-`build.sh` (e.g. `--sign`, `--skip-payload`) and activate the repository
-`.venv` when present so they can be called directly.
+take the version as their first argument and forward any extra arguments to
+`build.sh` (e.g. `--sign`, `--plain-name`).
 
 ### D6. Uninstall via script
 

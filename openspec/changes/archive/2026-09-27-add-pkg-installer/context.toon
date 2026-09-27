@@ -24,16 +24,16 @@ stack:
 
 conventions[6]:
   "build.sh takes --version <version> and --arch arm64|x86_64 strictly as arguments, no defaults"
-  "output name: bin/GitFileShardPlugin.v<version>.<arch>.pkg (version v-prefixed, architecture before the extension)"
-  "util/build-pkg-arm64.sh and util/build-pkg-x86_64.sh wrappers: version as the first argument, extra arguments forwarded, .venv activated when present"
+  "two-phase flow: bundling the plugin (PyInstaller -> dist/git-file-shard) is a SEPARATE step; build.sh only packages, never bundles"
+  "output name: bin/GitFileShardPlugin.v<version>.<arch>.pkg by default; --plain-name -> bin/GitFileShardPlugin.pkg (version and architecture still recorded inside the package)"
+  "util/build-pkg-arm64.sh and util/build-pkg-x86_64.sh wrappers: version as the first argument, extra arguments forwarded (no .venv activation)"
   "every user-visible resource — in BOTH locales (en.lproj + ru.lproj)"
   "the payload must exist before the build: dist/git-file-shard, README.md, LICENSE.txt"
-  "default branch is default; local test = manual install/uninstall by the user"
 
 commands:
-  build: "util/build-pkg-arm64.sh 0.1.0 -> bin/GitFileShardPlugin.v0.1.0.arm64.pkg"
-  direct_build: "src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh --version 0.1.0 --arch arm64 [--sign <identity>] [--skip-payload]"
-  payload_build: "GIT_FILE_SHARD_TARGET_ARCH=<arch> pyinstaller git-file-shard.spec --noconfirm -> dist/git-file-shard"
+  bundle: "GIT_FILE_SHARD_TARGET_ARCH=<arch> pyinstaller git-file-shard.spec --noconfirm -> dist/git-file-shard (separate step, run before packaging)"
+  build: "util/build-pkg-arm64.sh 0.1.0 -> bin/GitFileShardPlugin.v0.1.0.arm64.pkg; add --plain-name -> bin/GitFileShardPlugin.pkg"
+  direct_build: "src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh --version 0.1.0 --arch arm64 [--sign <identity>] [--plain-name]"
   inspect: "pkgutil --expand <pkg> <dir>; grep install-location <dir>/*/PackageInfo; cpio -it < <dir>/*/Payload"
   install: "open bin/GitFileShardPlugin.v0.1.0.arm64.pkg (GUI) or sudo installer -pkg <pkg> -target / (CLI)"
   uninstall: "sudo '/Library/Application Support/ImeSense/Git File Shard Plugin/uninstall.sh'"
@@ -44,7 +44,7 @@ pkg_engine:
     forcing_english: "defaults write -g AppleLanguages -array 'en' 'ru' (revert: defaults delete -g AppleLanguages), or reorder languages in system settings"
     pitfall: "welcome.txt and conclusion.txt are NOT embedded unless <welcome>/<conclusion> elements are explicitly referenced in distribution.xml (license alone is not enough)"
   version_flow: "distribution.xml carries no hardcoded version; pkgbuild --version <version> bakes it into the component PackageInfo, productbuild fills the pkg-ref version from it"
-  arch_flow: "PyInstaller spec-file builds ignore the --target-arch CLI flag -> the architecture is passed via the GIT_FILE_SHARD_TARGET_ARCH environment variable (read in git-file-shard.spec, None on Windows = unchanged behavior)"
+  arch_flow: "PyInstaller spec-file builds ignore the --target-arch CLI flag -> the architecture is passed via the GIT_FILE_SHARD_TARGET_ARCH environment variable during the SEPARATE bundling step (read in git-file-shard.spec, None on Windows = unchanged behavior); build.sh verifies the bundled payload architecture with lipo (a native-only interpreter silently bundles the wrong arch)"
   receipts: "pkgutil --pkg-info org.imesense.git-file-shard shows the install; pkgutil --forget removes the receipt; pkg has no built-in uninstaller -> uninstall.sh shipped in the payload"
 
 gotchas[6]:

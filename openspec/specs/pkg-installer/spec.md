@@ -105,17 +105,21 @@ resources in English (`Resources/en.lproj/`) and Russian
 
 The package SHALL be built from
 `src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh`, which stages the
-payload, runs `pkgbuild` and `productbuild`, and produces
+prebuilt plugin binary, runs `pkgbuild` and `productbuild`, and produces
 `bin/GitFileShardPlugin.v<version>.<arch>.pkg` (version prefixed with `v`
 and architecture inserted before the extension, e.g.
-`GitFileShardPlugin.v0.1.0.arm64.pkg`).
+`GitFileShardPlugin.v0.1.0.arm64.pkg`); the `--plain-name` option SHALL
+produce `bin/GitFileShardPlugin.pkg` instead (version and architecture
+still recorded inside the package).
 
 The build script SHALL require the version (`--version`) and the target
 architecture (`--arch arm64|x86_64`) as command line arguments; neither
 SHALL have a default.
 
-The build SHALL require `dist/git-file-shard`, `README.md` and
-`LICENSE.txt` to exist beforehand.
+Bundling the plugin (PyInstaller) SHALL be a separate step that runs
+beforehand; the build script SHALL NOT bundle the plugin itself and
+SHALL require `dist/git-file-shard`, `README.md` and `LICENSE.txt` to
+exist beforehand.
 
 The build script SHALL accept an optional code signing identity
 (ad-hoc signing of the payload by default, `productsign` with the given
@@ -123,24 +127,36 @@ identity when provided).
 
 Convenience wrappers `util/build-pkg-arm64.sh` and
 `util/build-pkg-x86_64.sh` SHALL pass the architecture to `build.sh`,
-take the version as their first argument, forward extra arguments to
-`build.sh` and activate the repository `.venv` when present.
+take the version as their first argument and forward extra arguments to
+`build.sh`.
 
 #### Scenario: Local build
 
 - **WHEN** `build.sh --version <version> --arch arm64` is executed on
-      macOS after the PyInstaller payload is built
+      macOS after the plugin binary is bundled into `dist/`
 - **THEN** `bin/GitFileShardPlugin.v<version>.arm64.pkg` is produced
       without errors
+
+#### Scenario: Plain name
+
+- **WHEN** `build.sh --version <version> --arch arm64 --plain-name` is
+      executed
+- **THEN** `bin/GitFileShardPlugin.pkg` is produced while the package
+      still records the version and the architecture
 
 #### Scenario: Missing arguments
 
 - **WHEN** `build.sh` is executed without `--version` or `--arch`
 - **THEN** it exits with an error and prints the usage line
 
+#### Scenario: Missing payload
+
+- **WHEN** `build.sh` is executed before the plugin binary is bundled
+      into `dist/`
+- **THEN** it exits with an error instructing to bundle the plugin first
+
 #### Scenario: Architecture selection
 
-- **WHEN** `util/build-pkg-x86_64.sh <version>` is executed with a
-      suitable Python interpreter
-- **THEN** the payload is built for `x86_64` and
-      `bin/GitFileShardPlugin.v<version>.x86_64.pkg` is produced
+- **WHEN** `util/build-pkg-x86_64.sh <version>` is executed with the
+      plugin bundled for `x86_64`
+- **THEN** `bin/GitFileShardPlugin.v<version>.x86_64.pkg` is produced
