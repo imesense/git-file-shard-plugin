@@ -164,7 +164,52 @@ jobs:
               uses: actions/upload-artifact@v7
               with:
                   name: ${{ github.event.repository.name }}-installer-exe-${{ matrix.system }}-${{ github.sha }}
-                  path: bin/GitFileShardPlugin.exe
+                  path: ${{ github.workspace }}/bin/GitFileShardPlugin.exe
+
+    pack-installer-msi:
+        name: "Pack MSI installer"
+
+        needs:
+            - publish-application
+
+        strategy:
+            matrix:
+                system:
+                    - windows-2022
+
+        runs-on: ${{ matrix.system }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v6
+              with:
+                  dotnet-version: '8.0.x'
+
+            - name: Get application
+              uses: actions/download-artifact@v8
+              with:
+                  name: ${{ github.event.repository.name }}-build-${{ matrix.system }}-${{ github.sha }}
+                  path: ${{ github.workspace }}/dist/
+
+            - name: Publish installer
+              run: |
+                  dotnet build `
+                      ${{ github.workspace }}/src/ImeSense.GitFileShardPlugin.Setup.Wix/ImeSense.GitFileShardPlugin.Setup.Wix.wixproj `
+                      -c Release `
+                      -o ${{ github.workspace }}/bin/
+
+            - name: Upload installer
+              uses: actions/upload-artifact@v7
+              with:
+                  name: ${{ github.event.repository.name }}-installer-msi-${{ matrix.system }}-${{ github.sha }}
+                  path: |
+                      ${{ github.workspace }}/bin/en-US/GitFileShardPlugin.msi
+                      ${{ github.workspace }}/bin/ru-RU/GitFileShardPlugin.msi
 
     pack-installer-pkg:
         name: "Pack PKG installer"
@@ -194,13 +239,13 @@ jobs:
             - name: Publish installer
               shell: bash
               run: |
-                  ./util/build-pkg-arm64.sh ${{ env.PLUGIN_VERSION }}
+                  ${{ github.workspace }}/util/build-pkg-arm64.sh ${{ env.PLUGIN_VERSION }}
 
             - name: Upload installer
               uses: actions/upload-artifact@v7
               with:
                   name: ${{ github.event.repository.name }}-installer-pkg-${{ matrix.system }}-${{ github.sha }}
-                  path: bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.pkg
+                  path: ${{ github.workspace }}/bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.pkg
 
     pack-installer-dmg:
         name: "Pack DMG installer"
@@ -230,11 +275,11 @@ jobs:
             - name: Publish installer
               shell: bash
               run: |
-                  ./util/build-pkg-arm64.sh ${{ env.PLUGIN_VERSION }} --plain-name
-                  ./util/build-dmg-arm64.sh ${{ env.PLUGIN_VERSION }}
+                  ${{ github.workspace }}/util/build-pkg-arm64.sh ${{ env.PLUGIN_VERSION }} --plain-name
+                  ${{ github.workspace }}/util/build-dmg-arm64.sh ${{ env.PLUGIN_VERSION }}
 
             - name: Upload installer
               uses: actions/upload-artifact@v7
               with:
                   name: ${{ github.event.repository.name }}-installer-dmg-${{ matrix.system }}-${{ github.sha }}
-                  path: bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.dmg
+                  path: ${{ github.workspace }}/bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.dmg
