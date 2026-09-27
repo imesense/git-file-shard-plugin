@@ -1,0 +1,33 @@
+#!/bin/bash
+# postinstall script for the git-file-shard plugin package.
+#
+# Creates the /usr/local/bin/git-file-shard symlink so that Git finds the
+# git file-shard subcommand in PATH, mirroring the add-to-PATH task of the
+# Windows installers.
+
+set -u
+
+APP_NAME='Git File Shard Plugin'
+INSTALL_DIR="/Library/Application Support/ImeSense/$APP_NAME"
+BIN_PATH="$INSTALL_DIR/bin/git-file-shard"
+LINK_PATH='/usr/local/bin/git-file-shard'
+
+if [ ! -x "$BIN_PATH" ]; then
+    echo "Error: installed binary '$BIN_PATH' was not found." >&2
+    exit 1
+fi
+
+# Refuse to clobber a regular file that happens to live at the link path.
+if [ -e "$LINK_PATH" ] && [ ! -L "$LINK_PATH" ]; then
+    echo "Error: '$LINK_PATH' already exists and is not a symlink." >&2
+    exit 1
+fi
+
+# Replace a stale symlink (or a missing one) with a fresh link.
+rm -f "$LINK_PATH"
+if ! ln -s "$BIN_PATH" "$LINK_PATH"; then
+    echo "Error: failed to create symlink '$LINK_PATH'." >&2
+    exit 1
+fi
+
+exit 0

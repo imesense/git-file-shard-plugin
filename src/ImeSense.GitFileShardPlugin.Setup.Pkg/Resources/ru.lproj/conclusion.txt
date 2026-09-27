@@ -1,0 +1,16 @@
+Установка успешно завершена.
+
+Инструмент git-file-shard установлен в папке:
+
+    /Library/Application Support/ImeSense/Git File Shard Plugin/
+
+Символьная ссылка /usr/local/bin/git-file-shard делает подкоманду
+git file-shard доступной в вашем PATH. Откройте новое окно терминала
+и выполните:
+
+    git file-shard --help
+
+Чтобы позже удалить плагин, запустите скрипт деинсталляции с правами
+администратора:
+
+    sudo '/Library/Application Support/ImeSense/Git File Shard Plugin/uninstall.sh'

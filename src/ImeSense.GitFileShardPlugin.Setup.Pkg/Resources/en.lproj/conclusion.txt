@@ -1,0 +1,15 @@
+Installation completed successfully.
+
+The git-file-shard tool is installed under:
+
+    /Library/Application Support/ImeSense/Git File Shard Plugin/
+
+The /usr/local/bin/git-file-shard symlink makes the git file-shard
+subcommand available in your PATH. Open a new terminal window and run:
+
+    git file-shard --help
+
+To remove the plugin later, run the uninstall script with administrator
+privileges:
+
+    sudo '/Library/Application Support/ImeSense/Git File Shard Plugin/uninstall.sh'
