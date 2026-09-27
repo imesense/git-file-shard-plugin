@@ -9,6 +9,7 @@ on:
         paths:
             - ".github/workflows/**"
             - "src/**"
+            - "util/**"
             - "*.py"
             - "*.spec"
     pull_request:
@@ -17,8 +18,12 @@ on:
         paths:
             - ".github/workflows/**"
             - "src/**"
+            - "util/**"
             - "*.py"
             - "*.spec"
+
+env:
+    PLUGIN_VERSION: "0.1.0"
 
 defaults:
     run:
@@ -68,6 +73,8 @@ jobs:
                 system:
                     - windows-2022
                     - ubuntu-24.04
+                    - macos-14
+            fail-fast: false
 
         runs-on: ${{ matrix.system }}
 
@@ -158,3 +165,76 @@ jobs:
               with:
                   name: ${{ github.event.repository.name }}-installer-exe-${{ matrix.system }}-${{ github.sha }}
                   path: bin/GitFileShardPlugin.exe
+
+    pack-installer-pkg:
+        name: "Pack PKG installer"
+
+        needs:
+            - publish-application
+
+        strategy:
+            matrix:
+                system:
+                    - macos-14
+
+        runs-on: ${{ matrix.system }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Get application
+              uses: actions/download-artifact@v8
+              with:
+                  name: ${{ github.event.repository.name }}-build-${{ matrix.system }}-${{ github.sha }}
+                  path: ${{ github.workspace }}/dist/
+
+            - name: Publish installer
+              shell: bash
+              run: |
+                  ./util/build-pkg-arm64.sh ${{ env.PLUGIN_VERSION }}
+
+            - name: Upload installer
+              uses: actions/upload-artifact@v7
+              with:
+                  name: ${{ github.event.repository.name }}-installer-pkg-${{ matrix.system }}-${{ github.sha }}
+                  path: bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.pkg
+
+    pack-installer-dmg:
+        name: "Pack DMG installer"
+
+        needs:
+            - publish-application
+
+        strategy:
+            matrix:
+                system:
+                    - macos-14
+
+        runs-on: ${{ matrix.system }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Get application
+              uses: actions/download-artifact@v8
+              with:
+                  name: ${{ github.event.repository.name }}-build-${{ matrix.system }}-${{ github.sha }}
+                  path: ${{ github.workspace }}/dist/
+
+            - name: Publish installer
+              shell: bash
+              run: |
+                  ./util/build-pkg-arm64.sh ${{ env.PLUGIN_VERSION }} --plain-name
+                  ./util/build-dmg-arm64.sh ${{ env.PLUGIN_VERSION }}
+
+            - name: Upload installer
+              uses: actions/upload-artifact@v7
+              with:
+                  name: ${{ github.event.repository.name }}-installer-dmg-${{ matrix.system }}-${{ github.sha }}
+                  path: bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.dmg
