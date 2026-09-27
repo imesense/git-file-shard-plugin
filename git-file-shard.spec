@@ -5,6 +5,14 @@
 PyInstaller spec for git-file-shard plugin.
 """
 
+import os
+
+# Target binary architecture for macOS builds (arm64 or x86_64); the
+# GIT_FILE_SHARD_TARGET_ARCH environment variable is set by the pkg build
+# script, because spec-file builds ignore the --target-arch command line
+# option. Unset (None) builds for the interpreter's native architecture.
+target_arch = os.environ.get('GIT_FILE_SHARD_TARGET_ARCH')
+
 block_cipher = None
 
 a = Analysis(
@@ -52,7 +60,7 @@ exe = EXE(
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
+    target_arch=target_arch,
     codesign_identity=None,
     entitlements_file=None,
 )

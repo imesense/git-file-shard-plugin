@@ -1,0 +1,10 @@
+Добро пожаловать в установщик ImeSense Git File Shard Plugin.
+
+Установщик размещает инструмент командной строки git-file-shard в папке:
+
+    /Library/Application Support/ImeSense/Git File Shard Plugin/
+
+и создаёт символьную ссылку /usr/local/bin/git-file-shard, чтобы Git
+мог найти подкоманду git file-shard в вашем PATH.
+
+Нажмите «Продолжить», чтобы продолжить установку.
