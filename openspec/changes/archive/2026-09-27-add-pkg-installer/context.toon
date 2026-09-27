@@ -1,0 +1,70 @@
+task:
+  id: add-pkg-installer
+  capability: pkg-installer
+  created: 2026-09-27
+  status: archived (merged into openspec/specs/pkg-installer/spec.md)
+  goal: "macOS pkg installer for git-file-shard built on stock pkgbuild/productbuild: packaging the PyInstaller binary, /usr/local/bin symlink for PATH integration, uninstall script, bilingual resources"
+  workflow: "OpenSpec (proposal + design + tasks + delta spec), files are maintained manually — openspec CLI is not available in the environment"
+
+environment:
+  os: macOS (Apple Silicon, arm64)
+  cwd: git-file-shard-plugin repository root
+  shell: zsh + bash for scripts
+  python: ".venv virtual environment (Python 3.10, pyinstaller 6.13.0); Homebrew python@3.10 interpreter (arm64-only)"
+  tools: "pkgbuild, productbuild, pkgutil, codesign, productsign, lipo — all stock macOS tools, no external dependencies (unlike Inno/WiX)"
+
+stack:
+  installer: "distribution pkg (productbuild) wrapping a component pkg (pkgbuild)"
+  payload: dist/git-file-shard (PyInstaller, no .exe suffix on macOS)
+  identifier: org.imesense.git-file-shard
+  install_location: "/Library/Application Support/ImeSense/Git File Shard Plugin (nested publisher/product, mirrors the Windows {app} layout)"
+  path_integration: "/usr/local/bin/git-file-shard symlink created by Scripts/postinstall (analog of the Windows add-to-PATH task)"
+  locales: "english + russian (Resources/en.lproj, Resources/ru.lproj: welcome, license, conclusion)"
+  signing: "ad-hoc codesign of the payload by default (required to run on Apple Silicon); optional --sign <identity> -> productsign with a Developer ID Installer identity"
+
+conventions[6]:
+  "build.sh takes --version <version> and --arch arm64|x86_64 strictly as arguments, no defaults"
+  "output name: bin/GitFileShardPlugin.v<version>.<arch>.pkg (version v-prefixed, architecture before the extension)"
+  "util/build-pkg-arm64.sh and util/build-pkg-x86_64.sh wrappers: version as the first argument, extra arguments forwarded, .venv activated when present"
+  "every user-visible resource — in BOTH locales (en.lproj + ru.lproj)"
+  "the payload must exist before the build: dist/git-file-shard, README.md, LICENSE.txt"
+  "default branch is default; local test = manual install/uninstall by the user"
+
+commands:
+  build: "util/build-pkg-arm64.sh 0.1.0 -> bin/GitFileShardPlugin.v0.1.0.arm64.pkg"
+  direct_build: "src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh --version 0.1.0 --arch arm64 [--sign <identity>] [--skip-payload]"
+  payload_build: "GIT_FILE_SHARD_TARGET_ARCH=<arch> pyinstaller git-file-shard.spec --noconfirm -> dist/git-file-shard"
+  inspect: "pkgutil --expand <pkg> <dir>; grep install-location <dir>/*/PackageInfo; cpio -it < <dir>/*/Payload"
+  install: "open bin/GitFileShardPlugin.v0.1.0.arm64.pkg (GUI) or sudo installer -pkg <pkg> -target / (CLI)"
+  uninstall: "sudo '/Library/Application Support/ImeSense/Git File Shard Plugin/uninstall.sh'"
+
+pkg_engine:
+  localization:
+    mechanism: "productbuild copies Resources/<lang>.lproj into Contents/Resources; Installer.app picks the first lproj matching the user's ordered preferred languages (System Settings > Language & Region), fallback = first available"
+    forcing_english: "defaults write -g AppleLanguages -array 'en' 'ru' (revert: defaults delete -g AppleLanguages), or reorder languages in system settings"
+    pitfall: "welcome.txt and conclusion.txt are NOT embedded unless <welcome>/<conclusion> elements are explicitly referenced in distribution.xml (license alone is not enough)"
+  version_flow: "distribution.xml carries no hardcoded version; pkgbuild --version <version> bakes it into the component PackageInfo, productbuild fills the pkg-ref version from it"
+  arch_flow: "PyInstaller spec-file builds ignore the --target-arch CLI flag -> the architecture is passed via the GIT_FILE_SHARD_TARGET_ARCH environment variable (read in git-file-shard.spec, None on Windows = unchanged behavior)"
+  receipts: "pkgutil --pkg-info org.imesense.git-file-shard shows the install; pkgutil --forget removes the receipt; pkg has no built-in uninstaller -> uninstall.sh shipped in the payload"
+
+gotchas[6]:
+  "MAIN GOTCHA: composing the install location from a single 'publisher + product' name produced the FLAT folder /Library/Application Support/ImeSense Git File Shard Plugin/ instead of the nested ImeSense/Git File Shard Plugin/ — the path must be assembled from separate PUBLISHER and APP_NAME components, and the resulting install-location verified in PackageInfo after every build"
+  "welcome/conclusion resources silently dropped by productbuild without explicit <welcome>/<conclusion> elements in distribution.xml (discovered by expanding the pkg and listing Resources)"
+  "codesign prints harmless 'write: Permission denied' lines when re-signing an already signed PyInstaller binary; the resulting ad-hoc signature is valid (codesign --verify passes, the binary runs)"
+  "spec-file PyInstaller builds ignore --target-arch; only the env-variable route works; the payload architecture must be verified with lipo (a native-only interpreter silently builds the wrong arch)"
+  "cross-building x86_64 needs a universal2 Python interpreter; a Homebrew arm64-only Python cannot produce it (the build fails fast with a clear lipo mismatch error)"
+  "the uninstall script lives inside the installation folder it deletes — it works because bash reads the whole script before executing, but it must not re-read itself after rm -rf"
+
+debug_story:
+  symptom: "the uninstaller path did not exist: the package installed into the flat /Library/Application Support/ImeSense Git File Shard Plugin/ folder"
+  research: "build.sh composed INSTALL_LOCATION from a single APP_NAME='ImeSense Git File Shard Plugin' variable while welcome/conclusion texts and the spec described the nested path — code diverged from the spec"
+  root_cause: "install-location string composition bug (single variable instead of publisher + product)"
+  fix: "separate PUBLISHER='ImeSense' and APP_NAME='Git File Shard Plugin' in build.sh, postinstall and uninstall.sh; install-location verified in PackageInfo after the rebuild"
+  verification: "manual install/uninstall confirmed by the user: files land in the nested folder, symlink works, git file-shard --help runs, uninstall removes the symlink, the folder, the receipt and the empty publisher folder"
+
+references:
+  delta: openspec/changes/archive/2026-09-27-add-pkg-installer/specs/pkg-installer/spec.md
+  artifacts: openspec/changes/archive/2026-09-27-add-pkg-installer/ (proposal, design, tasks)
+  project: src/ImeSense.GitFileShardPlugin.Setup.Pkg/
+  wrappers: util/build-pkg-arm64.sh, util/build-pkg-x86_64.sh
+  related: "openspec/specs/innosetup-installer/spec.md, openspec/specs/wix-installer/spec.md (Windows installers, parallel delivery)"
