@@ -1,0 +1,62 @@
+task:
+  id: add-dmg-installer
+  capability: dmg-installer
+  created: 2026-09-28
+  status: archived (merged into openspec/specs/dmg-installer/spec.md)
+  goal: "macOS DMG disk image for git-file-shard built on stock hdiutil: wrapping the PKG installer into a single downloadable image, volume carries the PKG only"
+  workflow: "OpenSpec (proposal + design + tasks + delta spec), files are maintained manually — openspec CLI is not available in the environment"
+
+environment:
+  os: macOS (Apple Silicon, arm64)
+  cwd: git-file-shard-plugin repository root
+  shell: zsh + bash for scripts
+  tools: "hdiutil (create, verify, attach, detach, imageinfo) — stock macOS tool, no external dependencies"
+
+stack:
+  format: "UDZO (UDIF read-only, zlib-compressed) disk image"
+  output: "bin/GitFileShardPlugin.v<version>.<arch>.dmg (version v-prefixed, architecture before the extension)"
+  volume_name: "Git File Shard Plugin"
+  volume_contents: "GitFileShardPlugin.pkg only (the plain-named PKG)"
+  precondition: "bin/GitFileShardPlugin.pkg must already exist — a pure precondition like dist/git-file-shard for the PKG build, regardless of how the PKG was produced"
+  wrappers: "util/build-dmg-arm64.sh, util/build-dmg-x86_64.sh (version as the first argument, extra arguments forwarded, no .venv activation)"
+
+conventions[6]:
+  "build.sh takes --version <version> and --arch arm64|x86_64 strictly as arguments, no defaults"
+  "three independent steps: bundling the plugin (PyInstaller -> dist/), building the PKG (-> bin/), building the DMG (-> bin/); each assumes the previous artifact already exists"
+  "the DMG never builds or modifies the PKG; the missing-PKG error just says 'build the PKG first'"
+  "output name: bin/GitFileShardPlugin.v<version>.<arch>.dmg mirrors the PKG naming convention"
+  "volume carries the PKG only — no Applications symlink (the plugin has no .app bundle to drag)"
+  "version and architecture live in the DMG file name and inside the PKG; the PKG keeps its plain name inside the volume"
+
+commands:
+  build: "util/build-dmg-arm64.sh 0.1.0 -> bin/GitFileShardPlugin.v0.1.0.arm64.dmg"
+  direct_build: "src/ImeSense.GitFileShardPlugin.Setup.Dmg/build.sh --version 0.1.0 --arch arm64"
+  create: "hdiutil create -format UDZO -volname 'Git File Shard Plugin' -srcfolder <staging> <output>.dmg"
+  verify: "hdiutil verify <dmg> (checksum VALID)"
+  inspect: "hdiutil imageinfo <dmg> (Format: UDZO); hdiutil attach -nobrowse -readonly <dmg>; ls '/Volumes/Git File Shard Plugin/'"
+  mount_unmount: "open <dmg> or hdiutil attach; hdiutil detach '/Volumes/Git File Shard Plugin'"
+
+dmg_engine:
+  format_choice: "UDZO = single-file compressed read-only image, the standard distribution format; no sparse images, no hybrid HFS+/ISO layouts at this stage"
+  staging: "build/dmg/volume staging folder copied into the image via -srcfolder; hdiutil flattens it into the UDIF image"
+  volume_name: "-volname sets the mounted volume name shown in Finder and /Volumes; spaces are fine when quoted"
+  applications_symlink: "REMOVED after review: the standard drag-to-Applications layout implies an .app bundle; the plugin has none, so the symlink was misleading — users run the PKG from the mounted volume directly"
+
+gotchas[3]:
+  "the Applications symlink in the volume is a convention for .app bundles; without a bundle to drag it misleads users — dropped after review, the PKG itself performs the real installation"
+  "hdiutil attach/imageinfo print deprecation warnings on recent macOS ('use diskutil image ...'); the old verbs still work, warnings are harmless"
+  "UDZO images are not sparse: the DMG size is roughly the compressed payload size (~6.3 MB payload -> ~7 MB image); acceptable at this scale"
+
+debug_story:
+  symptom: "none during implementation; the only review feedback was the misleading Applications symlink in the volume"
+  research: "the drag-to-Applications convention pairs an Applications symlink with an .app bundle in the volume; the plugin ships a PKG, not an app bundle"
+  root_cause: "the initial volume layout blindly copied the standard convention without an .app bundle to support it"
+  fix: "remove the Applications symlink from the staging folder; the volume carries the PKG only"
+  verification: "rebuilt DMG verified with hdiutil verify (checksum VALID); mounted volume contains exactly one entry (GitFileShardPlugin.pkg); manual test by the user: mount, install from the volume, uninstall — all work as with the bare PKG"
+
+references:
+  delta: openspec/changes/archive/2026-09-28-add-dmg-installer/specs/dmg-installer/spec.md
+  artifacts: openspec/changes/archive/2026-09-28-add-dmg-installer/ (proposal, design, tasks)
+  project: src/ImeSense.GitFileShardPlugin.Setup.Dmg/
+  wrappers: util/build-dmg-arm64.sh, util/build-dmg-x86_64.sh
+  related: "openspec/specs/pkg-installer/spec.md (the wrapped PKG installer), openspec/specs/innosetup-installer/spec.md, openspec/specs/wix-installer/spec.md (Windows installers)"

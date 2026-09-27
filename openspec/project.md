@@ -23,6 +23,11 @@
   (`src/ImeSense.GitFileShardPlugin.Setup.Pkg/`). Implemented and archived:
   `changes/archive/2026-09-27-add-pkg-installer/` (2026-09-27); install,
   symlink PATH integration and uninstall verified by manual install.
+- `dmg-installer` — macOS DMG disk image built with the stock `hdiutil`
+  tool, wrapping the PKG installer (`src/ImeSense.GitFileShardPlugin.Setup.Dmg/`).
+  Implemented and archived: `changes/archive/2026-09-28-add-dmg-installer/`
+  (2026-09-28); mount, install from the volume and uninstall verified by
+  manual test.
 
 ## Explicitly Out of Scope
 
@@ -39,6 +44,11 @@
   identifier `org.imesense.git-file-shard`, install location
   `/Library/Application Support/ImeSense/Git File Shard Plugin`,
   `/usr/local/bin/git-file-shard` symlink created by `postinstall`.
+- macOS image: `src/ImeSense.GitFileShardPlugin.Setup.Dmg/build.sh`
+  (`util/build-dmg-arm64.sh <version>` / `util/build-dmg-x86_64.sh
+  <version>` → `bin/GitFileShardPlugin.v<version>.<arch>.dmg`); wraps the
+  plain PKG (`bin/GitFileShardPlugin.pkg`, a precondition), volume carries
+  the PKG only.
 - `Setup.iss` conventions: 4-space indentation; Pascal `{ ... }` comments must
   never contain Inno constants such as `{app}` (the first `}` closes the
   comment); every user-visible task message must exist in both
