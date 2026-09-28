@@ -17,6 +17,13 @@ if [ ! -x "$BIN_PATH" ]; then
     exit 1
 fi
 
+# Create the /usr/local/bin directory when it does not exist yet (a
+# stock macOS install has /usr/local but not always its bin subfolder).
+LINK_DIR="$(dirname "$LINK_PATH")"
+if [ ! -d "$LINK_DIR" ]; then
+    mkdir -p "$LINK_DIR"
+fi
+
 # Refuse to clobber a regular file that happens to live at the link path.
 if [ -e "$LINK_PATH" ] && [ ! -L "$LINK_PATH" ]; then
     echo "Error: '$LINK_PATH' already exists and is not a symlink." >&2

@@ -62,6 +62,10 @@ The package SHALL NOT create Finder shortcuts or launch agents.
 The `postinstall` script SHALL create a `/usr/local/bin/git-file-shard`
 symlink pointing to the installed binary.
 
+The script SHALL create the `/usr/local/bin` directory when it does not
+exist yet (a stock macOS install has `/usr/local` but not always its
+`bin` subfolder).
+
 The script SHALL replace a stale symlink at that path but SHALL NOT
 delete a regular file.
 
@@ -70,6 +74,12 @@ delete a regular file.
 - **WHEN** installation completes
 - **THEN** `/usr/local/bin/git-file-shard` is a symlink to the installed
       binary and `git file-shard --help` resolves through `PATH`
+
+#### Scenario: Missing /usr/local/bin directory
+
+- **WHEN** `/usr/local` exists but `/usr/local/bin` does not
+- **THEN** the `postinstall` script creates `/usr/local/bin` and the
+      symlink inside it
 
 #### Scenario: Regular file preserved
 

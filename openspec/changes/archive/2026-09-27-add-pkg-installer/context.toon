@@ -18,7 +18,7 @@ stack:
   payload: dist/git-file-shard (PyInstaller, no .exe suffix on macOS)
   identifier: org.imesense.git-file-shard
   install_location: "/Library/Application Support/ImeSense/Git File Shard Plugin (nested publisher/product, mirrors the Windows {app} layout)"
-  path_integration: "/usr/local/bin/git-file-shard symlink created by Scripts/postinstall (analog of the Windows add-to-PATH task)"
+  path_integration: "/usr/local/bin/git-file-shard symlink created by Scripts/postinstall (analog of the Windows add-to-PATH task); postinstall mkdir -p's /usr/local/bin first — a stock macOS install has /usr/local but not always its bin subfolder"
   locales: "english + russian (Resources/en.lproj, Resources/ru.lproj: welcome, license, conclusion)"
   signing: "ad-hoc codesign of the payload by default (required to run on Apple Silicon); optional --sign <identity> -> productsign with a Developer ID Installer identity"
 
@@ -53,7 +53,7 @@ pkg_engine:
     verification: "pkgutil --expand <pkg> <dir> && grep hostArchitectures <dir>/Distribution — must show the requested architecture after every build"
   receipts: "pkgutil --pkg-info org.imesense.git-file-shard shows the install; pkgutil --forget removes the receipt; pkg has no built-in uninstaller -> uninstall.sh shipped in the payload"
 
-gotchas[7]:
+gotchas[8]:
   "MAIN GOTCHA: composing the install location from a single 'publisher + product' name produced the FLAT folder /Library/Application Support/ImeSense Git File Shard Plugin/ instead of the nested ImeSense/Git File Shard Plugin/ — the path must be assembled from separate PUBLISHER and APP_NAME components, and the resulting install-location verified in PackageInfo after every build"
   "welcome/conclusion resources silently dropped by productbuild without explicit <welcome>/<conclusion> elements in distribution.xml (discovered by expanding the pkg and listing Resources)"
   "codesign prints harmless 'write: Permission denied' lines when re-signing an already signed PyInstaller binary; the resulting ad-hoc signature is valid (codesign --verify passes, the binary runs)"
@@ -61,6 +61,7 @@ gotchas[7]:
   "cross-building x86_64 needs a universal2 Python interpreter; a Homebrew arm64-only Python cannot produce it (the build fails fast with a clear lipo mismatch error)"
   "the uninstall script lives inside the installation folder it deletes — it works because bash reads the whole script before executing, but it must not re-read itself after rm -rf"
   "without hostArchitectures in the distribution manifest, productbuild defaults to arm64+x86_64 support since Big Sur: an Intel machine evaluates the distribution under Rosetta 2 and prompts to install Rosetta even for an arm64-only payload — always set hostArchitectures per architecture (distribution.arm64.xml / distribution.x86_64.xml)"
+  "a stock macOS install has /usr/local but not always /usr/local/bin — ln does not create intermediate directories, so postinstall must mkdir -p the link directory before creating the symlink (reported from a real machine)"
 
 debug_story:
   symptom: "the uninstaller path did not exist: the package installed into the flat /Library/Application Support/ImeSense Git File Shard Plugin/ folder"
