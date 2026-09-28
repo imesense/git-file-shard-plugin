@@ -154,8 +154,12 @@ else
     PRODUCT_PKG="$OUTPUT_DIR/GitFileShardPlugin.v$VERSION.$ARCH.pkg"
 fi
 mkdir -p "$OUTPUT_DIR"
+# Per-architecture distribution manifests: without hostArchitectures the
+# macOS Installer evaluates the distribution under Rosetta 2 on Apple
+# Silicon and prompts to install Rosetta.
+DISTRIBUTION_XML="$SCRIPT_DIR/distribution.$ARCH.xml"
 productbuild \
-    --distribution "$SCRIPT_DIR/distribution.xml" \
+    --distribution "$DISTRIBUTION_XML" \
     --package-path "$BUILD_DIR" \
     --resources "$SCRIPT_DIR/Resources" \
     "$PRODUCT_PKG"

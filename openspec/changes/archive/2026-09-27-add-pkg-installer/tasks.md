@@ -3,9 +3,12 @@
 ## 1. Installer project
 
 - [x] 1.1 Create `src/ImeSense.GitFileShardPlugin.Setup.Pkg/` project with
-      `build.sh`, `distribution.xml`, `Resources/` and `Scripts/`
-- [x] 1.2 Author `distribution.xml`: title, options, license and resource
-      references for the distribution package
+      `build.sh`, per-architecture distribution manifests
+      (`distribution.arm64.xml`, `distribution.x86_64.xml`),
+      `Resources/` and `Scripts/`
+- [x] 1.2 Author the distribution manifests: title, options (with
+      `hostArchitectures`), license and resource references for the
+      distribution package
 - [x] 1.3 Author localized resources: `Resources/en.lproj/` and
       `Resources/ru.lproj/` with welcome, license and conclusion texts
 
@@ -42,6 +45,11 @@
 - [x] 3.8 Add the `--plain-name` option producing
       `bin/GitFileShardPlugin.pkg` (no version/architecture in the file
       name; both still recorded inside the package)
+- [x] 3.9 Declare the target architecture via per-architecture
+      distribution manifests (`hostArchitectures` in `options`),
+      selected by the `--arch` argument — fixes the Rosetta 2 prompt on
+      Intel machines caused by the productbuild dual-architecture
+      default
 
 ## 4. Verification
 

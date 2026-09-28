@@ -24,6 +24,30 @@ from a component package built with `pkgbuild`.
 - **THEN** the package identifier is `org.imesense.git-file-shard`
 - **AND** the package version is `0.1.0`
 
+### Requirement: Host Architecture
+
+The distribution manifest SHALL declare the target architecture through
+the `hostArchitectures` attribute of the `options` element.
+
+The build script SHALL select a per-architecture distribution manifest
+(`distribution.arm64.xml`, `distribution.x86_64.xml`) based on the
+`--arch` argument, so the built package never falls back to the
+`productbuild` default of dual `arm64`+`x86_64` support (which makes
+Intel machines evaluate the distribution under Rosetta 2 and prompt to
+install Rosetta).
+
+#### Scenario: Architecture recorded in the distribution
+
+- **WHEN** `build.sh --version <version> --arch arm64` builds a package
+- **THEN** the embedded `Distribution` declares
+      `hostArchitectures="arm64"`
+
+#### Scenario: No Rosetta prompt on Intel
+
+- **WHEN** the arm64 package is opened on an Intel machine
+- **THEN** the installer reports the package as unsupported for that
+      architecture instead of prompting to install Rosetta 2
+
 ### Requirement: Payload Installation
 
 The package SHALL install `git-file-shard` into the `bin` subfolder of

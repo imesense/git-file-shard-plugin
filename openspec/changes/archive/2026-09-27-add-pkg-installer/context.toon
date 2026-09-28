@@ -34,7 +34,7 @@ commands:
   bundle: "GIT_FILE_SHARD_TARGET_ARCH=<arch> pyinstaller git-file-shard.spec --noconfirm -> dist/git-file-shard (separate step, run before packaging)"
   build: "util/build-pkg-arm64.sh 0.1.0 -> bin/GitFileShardPlugin.v0.1.0.arm64.pkg; add --plain-name -> bin/GitFileShardPlugin.pkg"
   direct_build: "src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh --version 0.1.0 --arch arm64 [--sign <identity>] [--plain-name]"
-  inspect: "pkgutil --expand <pkg> <dir>; grep install-location <dir>/*/PackageInfo; cpio -it < <dir>/*/Payload"
+  inspect: "pkgutil --expand <pkg> <dir>; grep install-location <dir>/*/PackageInfo; grep hostArchitectures <dir>/Distribution; cpio -it < <dir>/*/Payload"
   install: "open bin/GitFileShardPlugin.v0.1.0.arm64.pkg (GUI) or sudo installer -pkg <pkg> -target / (CLI)"
   uninstall: "sudo '/Library/Application Support/ImeSense/Git File Shard Plugin/uninstall.sh'"
 
@@ -45,15 +45,22 @@ pkg_engine:
     pitfall: "welcome.txt and conclusion.txt are NOT embedded unless <welcome>/<conclusion> elements are explicitly referenced in distribution.xml (license alone is not enough)"
   version_flow: "distribution.xml carries no hardcoded version; pkgbuild --version <version> bakes it into the component PackageInfo, productbuild fills the pkg-ref version from it"
   arch_flow: "PyInstaller spec-file builds ignore the --target-arch CLI flag -> the architecture is passed via the GIT_FILE_SHARD_TARGET_ARCH environment variable during the SEPARATE bundling step (read in git-file-shard.spec, None on Windows = unchanged behavior); build.sh verifies the bundled payload architecture with lipo (a native-only interpreter silently bundles the wrong arch)"
+  host_architecture:
+    mechanism: "pkgbuild (component package) has NO architecture flag and needs none; the distribution architecture lives in the hostArchitectures attribute of <options> in the distribution manifest"
+    default_pitfall: "without hostArchitectures, productbuild (since Big Sur) silently specifies support for BOTH arm64 and x86_64 — on an Intel machine the Installer then evaluates the distribution under Rosetta 2 and prompts to install Rosetta, even for an arm64-only payload"
+    manifests: "per-architecture distribution manifests distribution.arm64.xml / distribution.x86_64.xml (architecture in the file name, dot-separated), selected by build.sh as distribution.$ARCH.xml"
+    discovery: "productbuild --synthesize --product <plist with arch=arm64> generates <options ... hostArchitectures='arm64'/> — the XML form of the --product arch requirement; --product itself only applies to synthesized distributions, so the attribute goes straight into the hand-written manifest"
+    verification: "pkgutil --expand <pkg> <dir> && grep hostArchitectures <dir>/Distribution — must show the requested architecture after every build"
   receipts: "pkgutil --pkg-info org.imesense.git-file-shard shows the install; pkgutil --forget removes the receipt; pkg has no built-in uninstaller -> uninstall.sh shipped in the payload"
 
-gotchas[6]:
+gotchas[7]:
   "MAIN GOTCHA: composing the install location from a single 'publisher + product' name produced the FLAT folder /Library/Application Support/ImeSense Git File Shard Plugin/ instead of the nested ImeSense/Git File Shard Plugin/ — the path must be assembled from separate PUBLISHER and APP_NAME components, and the resulting install-location verified in PackageInfo after every build"
   "welcome/conclusion resources silently dropped by productbuild without explicit <welcome>/<conclusion> elements in distribution.xml (discovered by expanding the pkg and listing Resources)"
   "codesign prints harmless 'write: Permission denied' lines when re-signing an already signed PyInstaller binary; the resulting ad-hoc signature is valid (codesign --verify passes, the binary runs)"
   "spec-file PyInstaller builds ignore --target-arch; only the env-variable route works; the payload architecture must be verified with lipo (a native-only interpreter silently builds the wrong arch)"
   "cross-building x86_64 needs a universal2 Python interpreter; a Homebrew arm64-only Python cannot produce it (the build fails fast with a clear lipo mismatch error)"
   "the uninstall script lives inside the installation folder it deletes — it works because bash reads the whole script before executing, but it must not re-read itself after rm -rf"
+  "without hostArchitectures in the distribution manifest, productbuild defaults to arm64+x86_64 support since Big Sur: an Intel machine evaluates the distribution under Rosetta 2 and prompts to install Rosetta even for an arm64-only payload — always set hostArchitectures per architecture (distribution.arm64.xml / distribution.x86_64.xml)"
 
 debug_story:
   symptom: "the uninstaller path did not exist: the package installed into the flat /Library/Application Support/ImeSense Git File Shard Plugin/ folder"
@@ -62,9 +69,17 @@ debug_story:
   fix: "separate PUBLISHER='ImeSense' and APP_NAME='Git File Shard Plugin' in build.sh, postinstall and uninstall.sh; install-location verified in PackageInfo after the rebuild"
   verification: "manual install/uninstall confirmed by the user: files land in the nested folder, symlink works, git file-shard --help runs, uninstall removes the symlink, the folder, the receipt and the empty publisher folder"
 
+debug_story_rosetta:
+  symptom: "on another (Intel) machine the pkg prompted to install Rosetta, although the payload was bundled for arm64"
+  research: "the man page of productbuild states: the Installer evaluates a distribution under Rosetta 2 on Apple Silicon unless the arch key includes arm64, and since Big Sur productbuild automatically specifies BOTH arm64 and x86_64 support unless a custom arch value is provided; expanding the built pkg showed no hostArchitectures attribute at all"
+  root_cause: "the hand-written distribution manifest carried no hostArchitectures, so productbuild defaulted to dual-architecture support and Intel machines fell back to Rosetta 2 evaluation"
+  fix: "per-architecture distribution manifests (distribution.arm64.xml, distribution.x86_64.xml) with an explicit hostArchitectures attribute; build.sh selects the manifest as distribution.$ARCH.xml"
+  verification: "pkgutil --expand of both arm64 builds (plain and full name) shows hostArchitectures='arm64' in Distribution; x86_64 manifest validated (the local arm64-only payload stops the x86_64 build earlier at the lipo check, as designed)"
+
 references:
   delta: openspec/changes/archive/2026-09-27-add-pkg-installer/specs/pkg-installer/spec.md
   artifacts: openspec/changes/archive/2026-09-27-add-pkg-installer/ (proposal, design, tasks)
   project: src/ImeSense.GitFileShardPlugin.Setup.Pkg/
+  manifests: "src/ImeSense.GitFileShardPlugin.Setup.Pkg/distribution.arm64.xml, distribution.x86_64.xml (per-architecture distribution manifests)"
   wrappers: util/build-pkg-arm64.sh, util/build-pkg-x86_64.sh
   related: "openspec/specs/innosetup-installer/spec.md, openspec/specs/wix-installer/spec.md (Windows installers, parallel delivery)"

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>ImeSense Git File Shard Plugin</title>
+    <options
+        customize="never"
+        allow-external-scripts="no"
+        hostArchitectures="arm64" />
+    <choices-outline>
+        <line choice="default">
+            <line choice="org.imesense.git-file-shard" />
+        </line>
+    </choices-outline>
+    <choice
+        id="default" />
+    <choice
+        id="org.imesense.git-file-shard"
+        visible="false">
+        <pkg-ref id="org.imesense.git-file-shard" />
+    </choice>
+    <pkg-ref
+        id="org.imesense.git-file-shard"
+        onConclusion="none">GitFileShardPlugin-component.pkg</pkg-ref>
+    <welcome file="welcome.txt" />
+    <conclusion file="conclusion.txt" />
+    <license file="license.txt" />
+</installer-gui-script>

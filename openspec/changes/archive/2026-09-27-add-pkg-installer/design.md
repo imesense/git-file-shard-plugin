@@ -60,11 +60,19 @@ Windows.
 - `pkgbuild --root <staging> --identifier org.imesense.git-file-shard
   --version 0.1.0 --scripts Scripts` builds the component package from a
   staged payload tree.
-- `productbuild --package <component.pkg> --distribution distribution.xml
-  --resources Resources` wraps it into a distribution package with the
-  title, license and localized welcome/conclusion resources
-  (`en.lproj`, `ru.lproj` — the direct analogue of the Inno/WiX locale
-  files).
+- `productbuild --package <component.pkg> --distribution
+  distribution.<arch>.xml --resources Resources` wraps it into a
+  distribution package with the title, license and localized
+  welcome/conclusion resources (`en.lproj`, `ru.lproj` — the direct
+  analogue of the Inno/WiX locale files).
+
+The distribution manifests are per-architecture
+(`distribution.arm64.xml`, `distribution.x86_64.xml`): the `options`
+element declares `hostArchitectures` so the package never falls back to
+the `productbuild` default of dual `arm64`+`x86_64` support — without it,
+Intel machines evaluate the distribution under Rosetta 2 and prompt to
+install Rosetta. `pkgbuild` (the component package) has no architecture
+flag and needs none.
 
 Identifier: `org.imesense.git-file-shard` (reverse-DNS under the ImeSense
 domain), version `0.1.0` (matches the WiX package version).
@@ -99,8 +107,8 @@ extension (`GitFileShardPlugin.v0.1.0.arm64.pkg`) so artifacts for
 different versions and architectures can coexist in `bin/`; the
 `--plain-name` option produces `bin/GitFileShardPlugin.pkg` instead while
 the package still records the version and architecture inside. The
-`distribution.xml` carries no hardcoded version; `productbuild` fills the
-`pkg-ref` version from the component package built with
+`distribution.<arch>.xml` carries no hardcoded version; `productbuild`
+fills the `pkg-ref` version from the component package built with
 `pkgbuild --version`.
 
 Convenience wrappers `util/build-pkg-arm64.sh` and `util/build-pkg-x86_64.sh`
