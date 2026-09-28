@@ -3,7 +3,8 @@
     <title>ImeSense Git File Shard Plugin</title>
     <options
         customize="never"
-        allow-external-scripts="no" />
+        allow-external-scripts="no"
+        hostArchitectures="x86_64" />
     <choices-outline>
         <line choice="default">
             <line choice="org.imesense.git-file-shard" />
