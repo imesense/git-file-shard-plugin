@@ -1,0 +1,77 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  git-file-shard is a Git plugin (Python 3.8+, MIT license, default branch
+  `default`) that splits large files into shards under
+  `.git-file-shards/<original/file/path>/` (a `manifest.json` plus `part-N`
+  files) and merges them back, so repositories can track large binary assets
+  without storing the originals in Git. The original file is appended to
+  `.gitignore`. Only files larger than the threshold (default 50 MB) and marked
+  `file-shards=auto` in `.gitattributes` are processed; last-match-wins. A file
+  is re-split only when its hash differs from the manifest one; stale parts are
+  cleaned first. SHA-256 is the default hash, `--md5` switches to MD5.
+
+  The plugin ships as a standalone PyInstaller binary invoked by Git as
+  `git file-shard`, plus platform installers: Inno Setup 7 EXE and WiX
+  Toolset 7 MSI for Windows, PKG and DMG for macOS.
+
+  Repository layout:
+  - `src/git_file_shard/` - plugin core (scan, split, restore, merge, hash).
+  - `src/git_hooks/` - Git hooks copied into `.git/hooks/` (pre-commit runs
+    `git file-shard scan`; post-checkout and post-merge run
+    `git file-shard restore`).
+  - `src/ImeSense.GitFileShardPlugin.Setup.Inno/` - Windows EXE installer.
+  - `src/ImeSense.GitFileShardPlugin.Setup.Wix/` - Windows MSI installer.
+  - `src/ImeSense.GitFileShardPlugin.Setup.Pkg/` - macOS PKG installer.
+  - `src/ImeSense.GitFileShardPlugin.Setup.Dmg/` - macOS DMG wrapping the PKG.
+  - `util/` - thin macOS PKG/DMG build wrappers (arm64, x86_64).
+  - `doc/` - integration and usage guides.
+  - `.github/workflows/build-application.yml` - CI build.
+
+  Verification is command-based: there is no test suite. Byte-compile the
+  Python sources (`python -m compileall -q src`,
+  `python -m py_compile git-file-shard.spec`), syntax-check shell scripts with
+  `bash -n`, and build the artifacts affected by the change. Every installer
+  expects `dist/git-file-shard.exe` (Windows) or `dist/git-file-shard`
+  (macOS), plus `README.md` and `LICENSE.txt`, to exist beforehand.
+
+  Conventions: English for code, comments, documentation and OpenSpec
+  artifacts; Russian only in localized installer resources. Python uses single
+  quotes, 4-space indentation, docstrings on public functions and `Error:` /
+  `Warning:` prefixes for user-facing output. Markdown uses CRLF line endings
+  and 2-space list indentation. Commit messages are short imperative summaries.
+
+  Capabilities formalized in OpenSpec:
+  - `innosetup-installer` - Windows EXE installer (Inno Setup 7).
+  - `wix-installer` - Windows MSI installer (WiX Toolset 7).
+  - `pkg-installer` - macOS distribution package (`pkgbuild`/`productbuild`).
+  - `dmg-installer` - macOS DMG image (`hdiutil`) wrapping the PKG.
+
+  Core plugin behavior (scan/split/restore/merge/hash) is not formalized as a
+  capability yet.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - Write all artifacts in English.
+  specs:
+    - Use the exact existing capability path from `openspec/specs/` for delta specs of existing capabilities.
+    - Prefer observable behavior (inputs, outputs, error conditions) over implementation details such as class or function names.
+  tasks:
+    - Put the verification method in the checkbox description (for example the exact command or the manual test).
+    - Cover the build and verification steps that apply to the change (byte-compile, `bash -n`, artifact build, manual install).
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+operations:
+  apply:
+    guidance:
+      - Verify with the commands that match the change (byte-compile, `bash -n`, build the affected installer) and report the actual results.
+  archive:
+    guidance:
+      - Archive only after an explicit user command and after the user has reviewed and verified the change.
+      - Archiving never includes a Git commit; commit only when the user explicitly asks for it.
