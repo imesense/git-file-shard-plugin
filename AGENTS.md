@@ -26,28 +26,39 @@ openspec/               OpenSpec artifacts (config.yaml, specs/, changes/)
 .github/workflows/      CI build workflow
 bin/, build/, dist/     Build artifacts (git-ignored)
 .pip/, .venv/           Local caches (git-ignored)
+uv.lock                 Locked Python dependencies (committed)
+.python-version         Python version for uv (3.10)
 ```
 
 ## Build & Verification Commands
 
 There is no test suite. Verification means: byte-compile all sources, shell-check the build scripts, then build the artifacts relevant to the change.
 
-Python tooling (virtual environment in `.venv/`, pip cache in `.pip/`; `pyinstaller` is the only pinned dependency, from `requirements.txt`):
+Python tooling is managed with `uv` (`uv.lock` is the source of truth and `pyproject.toml` declares dependencies). `pyinstaller` is the only direct dependency and lives in the `dev` dependency group:
 
 ```sh
-python -m venv .venv
-pip install --cache-dir .pip -r requirements.txt
+# Create .venv from the lock file and install the project
+uv sync --locked
+
+# Verify the lock file is up to date
+uv lock --check
 
 # Syntax check
-python -m compileall -q src
-python -m py_compile git-file-shard.spec
+uv run --locked python -m compileall -q src
+uv run --locked python -m py_compile git-file-shard.spec
 
 # Build the standalone binary -> dist/git-file-shard.exe (Windows)
 # or dist/git-file-shard (macOS)
-pyinstaller git-file-shard.spec --noconfirm
+uv run --locked pyinstaller git-file-shard.spec --noconfirm
 ```
 
-Run the interpreter and PyInstaller from the activated virtual environment (on Windows: `.venv\Scripts\activate`). Build the binary on the target OS: PyInstaller does not cross-compile.
+Run the interpreter and PyInstaller through `uv run` (it uses `.venv/` and syncs it from the lock file). `uv` reads the interpreter version from `.python-version` (3.10). Build the binary on the target OS: PyInstaller does not cross-compile.
+
+Dependency changes go through `pyproject.toml`: edit the `dev` group and run `uv lock` to refresh `uv.lock`:
+
+```sh
+uv lock
+```
 
 Shell syntax check (macOS build scripts; run on macOS or another bash-capable host):
 
@@ -79,7 +90,7 @@ macOS installers (must run on macOS):
 
 ```sh
 # Bundle the plugin first -> dist/git-file-shard
-pyinstaller git-file-shard.spec --noconfirm
+uv run --locked pyinstaller git-file-shard.spec --noconfirm
 
 # PKG -> bin/GitFileShardPlugin.v<version>.<arch>.pkg
 ./util/build-pkg-arm64.sh <version>
@@ -95,7 +106,7 @@ pyinstaller git-file-shard.spec --noconfirm
 
 The wrappers pass `<version>` and the architecture to the matching `build.sh` and forward extra arguments (for example `--sign <identity>` for the PKG). The PKG build verifies that the payload architecture matches `--arch`; the DMG build only wraps an existing plain PKG and never builds it. All installers expect `README.md` and `LICENSE.txt` in the repository root.
 
-CI: `.github/workflows/build-application.yml` runs the byte-compile checks on `ubuntu-24.04`, then PyInstaller on `windows-2022`, `ubuntu-24.04` and `macos-14` and uploads `dist/`. The MSI, PKG and DMG jobs build from those artifacts; the Inno EXE job is currently disabled (`if: false`). Keep workflow commands and paths in sync with the local build steps above.
+CI: `.github/workflows/build-application.yml` sets up `uv` with `astral-sh/setup-uv`, runs `uv sync --locked` (which fails when `uv.lock` is stale), the byte-compile checks on `ubuntu-24.04`, then PyInstaller on `windows-2022`, `ubuntu-24.04` and `macos-14` and uploads `dist/`. The MSI, PKG and DMG jobs build from those artifacts; the Inno EXE job is currently disabled (`if: false`). Keep workflow commands and paths in sync with the local build steps above.
 
 ## Conventions
 

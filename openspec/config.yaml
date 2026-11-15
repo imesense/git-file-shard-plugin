@@ -28,14 +28,20 @@ context: |
   - `src/ImeSense.GitFileShardPlugin.Setup.Dmg/` - macOS DMG wrapping the PKG.
   - `util/` - thin macOS PKG/DMG build wrappers (arm64, x86_64).
   - `doc/` - integration and usage guides.
+  - `pyproject.toml`, `uv.lock`, `.python-version` - Python tooling.
   - `.github/workflows/build-application.yml` - CI build.
 
-  Verification is command-based: there is no test suite. Byte-compile the
-  Python sources (`python -m compileall -q src`,
-  `python -m py_compile git-file-shard.spec`), syntax-check shell scripts with
-  `bash -n`, and build the artifacts affected by the change. Every installer
-  expects `dist/git-file-shard.exe` (Windows) or `dist/git-file-shard`
-  (macOS), plus `README.md` and `LICENSE.txt`, to exist beforehand.
+  Verification is command-based: there is no test suite. Python tooling is
+  managed with `uv` (`uv.lock` is the source of truth and `.python-version`
+  pins 3.10).
+  Byte-compile the Python sources
+  (`uv run --locked python -m compileall -q src`,
+  `uv run --locked python -m py_compile git-file-shard.spec`), syntax-check
+  shell scripts with `bash -n`, and build the artifacts affected by the change
+  (`uv sync --locked`, `uv run --locked pyinstaller git-file-shard.spec
+  --noconfirm`). Every installer expects `dist/git-file-shard.exe` (Windows) or
+  `dist/git-file-shard` (macOS), plus `README.md` and `LICENSE.txt`, to exist
+  beforehand.
 
   Conventions: English for code, comments, documentation and OpenSpec
   artifacts; Russian only in localized installer resources. Python uses single

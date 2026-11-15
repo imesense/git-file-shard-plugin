@@ -19,6 +19,7 @@ Thumbs.db
 /.pip
 /.venv
 __pycache__
+*.egg-info
 
 # NuGet cache
 /.nuget

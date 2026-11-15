@@ -12,6 +12,9 @@ on:
             - "util/**"
             - "*.py"
             - "*.spec"
+            - "pyproject.toml"
+            - "uv.lock"
+            - ".python-version"
     pull_request:
         branches:
             - "**"
@@ -21,6 +24,9 @@ on:
             - "util/**"
             - "*.py"
             - "*.spec"
+            - "pyproject.toml"
+            - "uv.lock"
+            - ".python-version"
 
 env:
     PLUGIN_VERSION: "0.1.0"
@@ -47,18 +53,27 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Setup Python
-              uses: actions/setup-python@v7
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v7
               with:
-                  python-version: '3.10'
+                  version: "0.13.x"
+                  python-version: "3.10"
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Setup dependencies
+              run: |
+                  uv sync --locked
 
             - name: Build modules
               run: |
-                  python `
+                  uv run --locked `
+                      python `
                       -m compileall `
                       -q `
                           ${{ github.workspace }}/src
-                  python `
+                  uv run --locked `
+                      python `
                       -m py_compile `
                       ${{ github.workspace }}/git-file-shard.spec
 
@@ -84,31 +99,22 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Setup Python
-              uses: actions/setup-python@v7
+            - name: Setup uv
+              uses: astral-sh/setup-uv@v7
               with:
-                  python-version: '3.10'
-
-            - name: Cache dependencies
-              uses: actions/cache@v6
-              with:
-                  key: Application-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
-                  restore-keys: |
-                      Application-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
-                      Application-${{ hashFiles('**/requirements*.txt') }}
-                      Application-
-                  path: |
-                      ${{ github.workspace }}/.pip/
+                  version: "0.13.x"
+                  python-version: "3.10"
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
 
             - name: Setup dependencies
               run: |
-                  pip install `
-                      -r ${{ github.workspace }}/requirements.txt `
-                      --cache-dir ${{ github.workspace }}/.pip/
+                  uv sync --locked
 
             - name: Pack application
               run: |
-                  pyinstaller `
+                  uv run --locked `
+                      pyinstaller `
                       ${{ github.workspace }}/git-file-shard.spec
 
             - name: Upload application
