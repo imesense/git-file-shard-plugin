@@ -124,8 +124,8 @@ jobs:
                   path: |
                       ${{ github.workspace }}/dist/
 
-    pack-installer-exe:
-        name: "Pack EXE installer"
+    pack-windows-installer-exe:
+        name: "Pack Windows EXE installer"
 
         needs:
             - publish-application
@@ -172,8 +172,8 @@ jobs:
                   name: ${{ github.event.repository.name }}-installer-exe-${{ matrix.system }}-${{ github.sha }}
                   path: ${{ github.workspace }}/bin/GitFileShardPlugin.exe
 
-    pack-installer-msi:
-        name: "Pack MSI installer"
+    pack-windows-installer-msi:
+        name: "Pack Windows MSI installer"
 
         needs:
             - publish-application
@@ -217,8 +217,8 @@ jobs:
                       ${{ github.workspace }}/bin/en-US/GitFileShardPlugin.msi
                       ${{ github.workspace }}/bin/ru-RU/GitFileShardPlugin.msi
 
-    pack-installer-pkg:
-        name: "Pack PKG installer"
+    pack-macos-installer-pkg:
+        name: "Pack macOS PKG installer"
 
         needs:
             - publish-application
@@ -253,8 +253,8 @@ jobs:
                   name: ${{ github.event.repository.name }}-installer-pkg-${{ matrix.system }}-${{ github.sha }}
                   path: ${{ github.workspace }}/bin/GitFileShardPlugin.v${{ env.PLUGIN_VERSION }}.arm64.pkg
 
-    pack-installer-dmg:
-        name: "Pack DMG installer"
+    pack-macos-installer-dmg:
+        name: "Pack macOS DMG installer"
 
         needs:
             - publish-application
