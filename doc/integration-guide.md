@@ -35,24 +35,25 @@ git file-shard --help
 
 ### Build from source
 
+Dependencies are managed with [uv](https://docs.astral.sh/uv/). `uv.lock` pins
+the exact versions, and `.python-version` selects Python 3.10:
+
 ```sh
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-./.venv/Scripts/activate
-
-# Install dependencies
-pip install -r requirements.txt --cache-dir .pip
-
-# Build bundle
-pyinstaller --clean --noconfirm --distpath dist --workpath build git-file-shard.spec
+# Restore the locked environment and build the bundle
+uv sync --locked
+uv run --locked pyinstaller --clean --noconfirm --distpath dist --workpath build git-file-shard.spec
 ```
 
 The binary will be at `dist/git-file-shard.exe`.
 Add it to your `PATH`.
 
 ### Install as Python package
+
+```sh
+uv tool install .
+```
+
+Or with pip:
 
 ```sh
 pip install .
