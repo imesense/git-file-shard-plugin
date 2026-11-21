@@ -116,7 +116,7 @@ localization files; the Russian file SHALL use codepage 1251.
 ### Requirement: Build Reproducibility
 
 The MSI SHALL be built from
-`src/ImeSense.GitFileShardPlugin.Setup.Wix/ImeSense.GitFileShardPlugin.Setup.Wix.wixproj`
+`src/installer_windows_wix/GitFileShard.Installer.Wix.wixproj`
 with WiX Toolset 7 (`dotnet build`), producing
 `bin/GitFileShardPlugin.msi`.
 

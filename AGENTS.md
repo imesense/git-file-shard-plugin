@@ -16,7 +16,7 @@ Instructions for AI coding agents working in this repository.
 src/git_file_shard/     Python package (plugin core)
 src/git_hooks/          Git hooks to copy into .git/hooks/
 src/installer_windows_inno/   Inno Setup 7 EXE installer
-src/ImeSense.GitFileShardPlugin.Setup.Wix/    WiX Toolset 7 MSI installer
+src/installer_windows_wix/    WiX Toolset 7 MSI installer
 src/ImeSense.GitFileShardPlugin.Setup.Pkg/    macOS PKG installer
 src/ImeSense.GitFileShardPlugin.Setup.Dmg/    macOS DMG wrapper around the PKG
 util/                   macOS PKG/DMG build wrappers (arm64/x86_64)
@@ -81,7 +81,7 @@ ISCC.exe src\installer_windows_inno\Setup.iss
 ISCC.exe --output=no src\installer_windows_inno\Setup.iss
 
 # WiX Toolset 7 MSI -> bin/<culture>/GitFileShardPlugin.msi
-dotnet build src\ImeSense.GitFileShardPlugin.Setup.Wix\ImeSense.GitFileShardPlugin.Setup.Wix.wixproj -c Release -o bin
+dotnet build src\installer_windows_wix\GitFileShard.Installer.Wix.wixproj -c Release -o bin
 ```
 
 `ISCC.exe` must be available on `PATH`. The Inno script expects `dist/git-file-shard.exe`, `README.md` and `LICENSE.txt` to exist, and writes output to `bin/`. Note: even `--output=no` deletes a stale file from the output directory, so rebuild after compile-only checks. The WiX build requires the .NET 8 SDK and the same payload; CI uploads `bin/en-US/GitFileShardPlugin.msi` and `bin/ru-RU/GitFileShardPlugin.msi`.

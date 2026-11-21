@@ -205,7 +205,7 @@ jobs:
             - name: Publish installer
               run: |
                   dotnet build `
-                      ${{ github.workspace }}/src/ImeSense.GitFileShardPlugin.Setup.Wix/ImeSense.GitFileShardPlugin.Setup.Wix.wixproj `
+                      ${{ github.workspace }}/src/installer_windows_wix/GitFileShard.Installer.Wix.wixproj `
                       -c Release `
                       -o ${{ github.workspace }}/bin/
 
