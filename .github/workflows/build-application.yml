@@ -164,7 +164,7 @@ jobs:
             - name: Publish installer
               run: |
                   . ISCC.exe `
-                      src\ImeSense.GitFileShardPlugin.Setup.Inno\Setup.iss
+                      src\installer_windows_inno\Setup.iss
 
             - name: Upload installer
               uses: actions/upload-artifact@v7

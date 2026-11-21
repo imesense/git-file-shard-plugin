@@ -15,7 +15,7 @@ Instructions for AI coding agents working in this repository.
 ```text
 src/git_file_shard/     Python package (plugin core)
 src/git_hooks/          Git hooks to copy into .git/hooks/
-src/ImeSense.GitFileShardPlugin.Setup.Inno/   Inno Setup 7 EXE installer
+src/installer_windows_inno/   Inno Setup 7 EXE installer
 src/ImeSense.GitFileShardPlugin.Setup.Wix/    WiX Toolset 7 MSI installer
 src/ImeSense.GitFileShardPlugin.Setup.Pkg/    macOS PKG installer
 src/ImeSense.GitFileShardPlugin.Setup.Dmg/    macOS DMG wrapper around the PKG
@@ -75,10 +75,10 @@ Windows installers:
 
 ```sh
 # Inno Setup 7 EXE -> bin/GitFileShardPlugin.exe
-ISCC.exe src\ImeSense.GitFileShardPlugin.Setup.Inno\Setup.iss
+ISCC.exe src\installer_windows_inno\Setup.iss
 
 # Compile check only, no output file
-ISCC.exe --output=no src\ImeSense.GitFileShardPlugin.Setup.Inno\Setup.iss
+ISCC.exe --output=no src\installer_windows_inno\Setup.iss
 
 # WiX Toolset 7 MSI -> bin/<culture>/GitFileShardPlugin.msi
 dotnet build src\ImeSense.GitFileShardPlugin.Setup.Wix\ImeSense.GitFileShardPlugin.Setup.Wix.wixproj -c Release -o bin

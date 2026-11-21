@@ -111,7 +111,7 @@ custom message files.
 ### Requirement: Build Reproducibility
 
 The installer SHALL be built from
-`src/ImeSense.GitFileShardPlugin.Setup.Inno/Setup.iss` with Inno Setup 7
+`src/installer_windows_inno/Setup.iss` with Inno Setup 7
 (`ISCC.exe`), producing `bin/GitFileShardPlugin.exe`.
 
 The build SHALL require `dist/git-file-shard.exe`, `README.md` and
