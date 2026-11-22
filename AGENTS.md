@@ -18,7 +18,7 @@ src/git_hooks/          Git hooks to copy into .git/hooks/
 src/installer_windows_inno/   Inno Setup 7 EXE installer
 src/installer_windows_wix/    WiX Toolset 7 MSI installer
 src/installer_macos_pkg/      macOS PKG installer
-src/ImeSense.GitFileShardPlugin.Setup.Dmg/    macOS DMG wrapper around the PKG
+src/installer_macos_dmg/      macOS DMG wrapper around the PKG
 util/                   macOS PKG/DMG build wrappers (arm64/x86_64)
 doc/                    integration-guide.md and usage-guide.md
 openspec/               OpenSpec artifacts (config.yaml, specs/, changes/)
@@ -64,7 +64,7 @@ Shell syntax check (macOS build scripts; run on macOS or another bash-capable ho
 
 ```sh
 bash -n src/installer_macos_pkg/build.sh
-bash -n src/ImeSense.GitFileShardPlugin.Setup.Dmg/build.sh
+bash -n src/installer_macos_dmg/build.sh
 bash -n util/build-pkg-arm64.sh
 bash -n util/build-pkg-x86_64.sh
 bash -n util/build-dmg-arm64.sh

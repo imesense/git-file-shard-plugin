@@ -44,7 +44,7 @@ DMG build SHALL NOT build or modify the PKG.
 ### Requirement: Build Script and Output Artifact
 
 The DMG SHALL be built from
-`src/ImeSense.GitFileShardPlugin.Setup.Dmg/build.sh`, which stages the
+`src/installer_macos_dmg/build.sh`, which stages the
 volume contents, runs `hdiutil create` and `hdiutil verify`, and produces
 `bin/GitFileShardPlugin.v<version>.<arch>.dmg`.
 

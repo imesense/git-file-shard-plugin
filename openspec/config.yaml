@@ -25,7 +25,7 @@ context: |
   - `src/installer_windows_inno/` - Windows EXE installer (Inno Setup 7).
   - `src/installer_windows_wix/` - Windows MSI installer (WiX Toolset 7).
   - `src/installer_macos_pkg/` - macOS PKG installer.
-  - `src/ImeSense.GitFileShardPlugin.Setup.Dmg/` - macOS DMG wrapping the PKG.
+  - `src/installer_macos_dmg/` - macOS DMG wrapping the PKG.
   - `util/` - thin macOS PKG/DMG build wrappers (arm64, x86_64).
   - `doc/` - integration and usage guides.
   - `pyproject.toml`, `uv.lock`, `.python-version` - Python tooling.
