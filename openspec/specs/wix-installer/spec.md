@@ -79,12 +79,6 @@ elevation.
 The `OptionsDlg` dialog SHALL appear between `InstallDirDlg` and
 `VerifyReadyDlg` during first-time installation.
 
-Dialog transitions SHALL be published with `Order` values greater than
-the built-in `WixUI_InstallDir` publishes on the same controls
-(`Order="5"` on `InstallDirDlg/Next`, `Order="2"` on
-`VerifyReadyDlg/Back`), because MSI executes ControlEvents in ascending
-`Order` and the last `NewDialog` event wins.
-
 The maintenance (`Installed`) sequence SHALL fall back to the built-in
 transitions without showing `OptionsDlg`.
 
@@ -100,6 +94,21 @@ transitions without showing `OptionsDlg`.
       installation
 - **THEN** the built-in dialog sequence is used and `OptionsDlg` is not
       shown
+
+### Requirement: Dialog Transition Ordering
+
+Dialog transitions SHALL be published with `Order` values greater than
+the built-in `WixUI_InstallDir` publishes on the same controls
+(`Order="5"` on `InstallDirDlg/Next`, `Order="2"` on
+`VerifyReadyDlg/Back`), because MSI executes ControlEvents in ascending
+`Order` and the last `NewDialog` event wins.
+
+#### Scenario: Custom transition takes precedence
+
+- **WHEN** the user clicks Next on `InstallDirDlg` during first-time
+      installation
+- **THEN** the custom publish runs after the built-in one and `OptionsDlg`
+      is displayed
 
 ### Requirement: Localized Strings
 

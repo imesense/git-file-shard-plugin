@@ -41,27 +41,12 @@ DMG build SHALL NOT build or modify the PKG.
 - **AND** installing the PKG performs the installation defined by the
       pkg-installer capability
 
-### Requirement: Build Reproducibility
+### Requirement: Build Script and Output Artifact
 
 The DMG SHALL be built from
 `src/ImeSense.GitFileShardPlugin.Setup.Dmg/build.sh`, which stages the
-volume contents, runs `hdiutil create` and `hdiutil verify`, and
-produces `bin/GitFileShardPlugin.v<version>.<arch>.dmg`.
-
-The build script SHALL require the version (`--version`) and the target
-architecture (`--arch arm64|x86_64`) as command line arguments; neither
-SHALL have a default.
-
-The build SHALL require the PKG (`bin/GitFileShardPlugin.pkg`) to exist
-beforehand and SHALL fail with a clear error otherwise.
-
-Bundling the plugin (PyInstaller) and building the PKG SHALL remain
-independent steps; the DMG build SHALL only wrap the existing PKG.
-
-Convenience wrappers `util/build-dmg-arm64.sh` and
-`util/build-dmg-x86_64.sh` SHALL pass the architecture to `build.sh`,
-take the version as their first argument and forward extra arguments to
-`build.sh`.
+volume contents, runs `hdiutil create` and `hdiutil verify`, and produces
+`bin/GitFileShardPlugin.v<version>.<arch>.dmg`.
 
 #### Scenario: Local build
 
@@ -69,6 +54,18 @@ take the version as their first argument and forward extra arguments to
       macOS after the plain PKG is built
 - **THEN** `bin/GitFileShardPlugin.v<version>.arm64.dmg` is produced
       without errors
+
+### Requirement: Build Preconditions
+
+The build script SHALL require the version (`--version`) and the target
+architecture (`--arch arm64|x86_64`) as command line arguments; neither
+SHALL have a default.
+
+The build SHALL require `bin/GitFileShardPlugin.pkg` to exist beforehand
+and SHALL fail with a clear error otherwise.
+
+Bundling the plugin (PyInstaller) and building the PKG SHALL remain
+independent steps; the DMG build SHALL only wrap the existing PKG.
 
 #### Scenario: Missing arguments
 
@@ -79,6 +76,13 @@ take the version as their first argument and forward extra arguments to
 
 - **WHEN** `build.sh` is executed before the PKG exists in `bin/`
 - **THEN** it exits with an error instructing to build the PKG first
+
+### Requirement: Convenience Wrappers
+
+Convenience wrappers `util/build-dmg-arm64.sh` and
+`util/build-dmg-x86_64.sh` SHALL take the version as their first
+argument, pass the matching architecture to `build.sh`, and forward extra
+arguments to it.
 
 #### Scenario: Architecture selection
 

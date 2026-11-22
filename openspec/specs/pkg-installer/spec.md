@@ -135,34 +135,19 @@ resources in English (`Resources/en.lproj/`) and Russian
 - **THEN** the installer shows the Russian welcome, license and
       conclusion texts
 
-### Requirement: Build Reproducibility
+### Requirement: Build Script and Output Artifact
 
-The package SHALL be built from
-`src/installer_macos_pkg/build.sh`, which stages the
-prebuilt plugin binary, runs `pkgbuild` and `productbuild`, and produces
-`bin/GitFileShardPlugin.v<version>.<arch>.pkg` (version prefixed with `v`
-and architecture inserted before the extension, e.g.
-`GitFileShardPlugin.v0.1.0.arm64.pkg`); the `--plain-name` option SHALL
-produce `bin/GitFileShardPlugin.pkg` instead (version and architecture
-still recorded inside the package).
+The package SHALL be built from `src/installer_macos_pkg/build.sh`, which
+stages the payload, runs `pkgbuild` and `productbuild`, and writes the
+result to `bin/`.
 
-The build script SHALL require the version (`--version`) and the target
-architecture (`--arch arm64|x86_64`) as command line arguments; neither
-SHALL have a default.
+The output name SHALL embed the version (prefixed with `v`) and the
+architecture before the extension, for example
+`GitFileShardPlugin.v0.1.0.arm64.pkg`.
 
-Bundling the plugin (PyInstaller) SHALL be a separate step that runs
-beforehand; the build script SHALL NOT bundle the plugin itself and
-SHALL require `dist/git-file-shard`, `README.md` and `LICENSE.txt` to
-exist beforehand.
-
-The build script SHALL accept an optional code signing identity
-(ad-hoc signing of the payload by default, `productsign` with the given
-identity when provided).
-
-Convenience wrappers `util/build-pkg-arm64.sh` and
-`util/build-pkg-x86_64.sh` SHALL pass the architecture to `build.sh`,
-take the version as their first argument and forward extra arguments to
-`build.sh`.
+The `--plain-name` option SHALL produce `bin/GitFileShardPlugin.pkg`
+instead, with the version and architecture still recorded inside the
+package.
 
 #### Scenario: Local build
 
@@ -178,6 +163,16 @@ take the version as their first argument and forward extra arguments to
 - **THEN** `bin/GitFileShardPlugin.pkg` is produced while the package
       still records the version and the architecture
 
+### Requirement: Build Inputs
+
+The build script SHALL require the version (`--version`) and the target
+architecture (`--arch arm64|x86_64`) as command line arguments; neither
+SHALL have a default.
+
+Bundling the plugin (PyInstaller) SHALL be a separate step that runs
+beforehand. The build script SHALL NOT bundle the plugin itself and SHALL
+require `dist/git-file-shard`, `README.md` and `LICENSE.txt` to exist.
+
 #### Scenario: Missing arguments
 
 - **WHEN** `build.sh` is executed without `--version` or `--arch`
@@ -188,6 +183,25 @@ take the version as their first argument and forward extra arguments to
 - **WHEN** `build.sh` is executed before the plugin binary is bundled
       into `dist/`
 - **THEN** it exits with an error instructing to bundle the plugin first
+
+### Requirement: Code Signing
+
+The payload SHALL be ad-hoc signed by default. When a signing identity is
+provided, the built package SHALL be signed with `productsign` using that
+identity.
+
+#### Scenario: Signed build
+
+- **WHEN** `build.sh --version <version> --arch arm64 --sign <identity>`
+      is executed
+- **THEN** the produced package is signed with the given identity
+
+### Requirement: Convenience Wrappers
+
+Convenience wrappers `util/build-pkg-arm64.sh` and
+`util/build-pkg-x86_64.sh` SHALL take the version as their first
+argument, pass the matching architecture to `build.sh`, and forward extra
+arguments to it.
 
 #### Scenario: Architecture selection
 
