@@ -22,7 +22,7 @@ fi
 VERSION="$1"
 shift
 
-exec "$REPO_ROOT/src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh" \
+exec "$REPO_ROOT/src/installer_macos_pkg/build.sh" \
     --version "$VERSION" \
     --arch x86_64 \
     "$@"

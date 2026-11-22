@@ -138,7 +138,7 @@ resources in English (`Resources/en.lproj/`) and Russian
 ### Requirement: Build Reproducibility
 
 The package SHALL be built from
-`src/ImeSense.GitFileShardPlugin.Setup.Pkg/build.sh`, which stages the
+`src/installer_macos_pkg/build.sh`, which stages the
 prebuilt plugin binary, runs `pkgbuild` and `productbuild`, and produces
 `bin/GitFileShardPlugin.v<version>.<arch>.pkg` (version prefixed with `v`
 and architecture inserted before the extension, e.g.
