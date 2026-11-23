@@ -7,6 +7,7 @@ This document describes how to install and integrate **Git File Shard** plugin i
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
   - [Get pre-built binary](#get-pre-built-binary)
+  - [Install as Deb package](#install-as-deb-package)
   - [Build from source](#build-from-source)
   - [Install as Python package](#install-as-python-package)
 - [Git hook integration](#git-hook-integration)
@@ -31,6 +32,52 @@ Verify installation:
 
 ```sh
 git file-shard --help
+```
+
+### Install as Deb package
+
+The plugin is distributed as a Debian package for `amd64` and `arm64`.
+The file name carries the distribution after the version, for example
+`git-file-shard_0.1.0_ubuntu22.04_amd64.deb`:
+
+```sh
+sudo apt install ./git-file-shard_0.1.0_ubuntu22.04_amd64.deb
+```
+
+The package installs the plugin into
+`/opt/imesense/git-file-shard-plugin/` and links it into `PATH` through
+`/usr/local/bin/git-file-shard`. `README.md` and `LICENSE.txt` are placed
+under `/opt/imesense/git-file-shard-plugin/share/doc/`.
+
+Verify installation:
+
+```sh
+git file-shard --help
+```
+
+Remove the package together with the installed files:
+
+```sh
+sudo apt remove git-file-shard
+```
+
+To build the package yourself, bundle the plugin first and run the
+matching wrapper on a host of the same architecture:
+
+```sh
+uv run --locked pyinstaller git-file-shard.spec --noconfirm
+./util/build-deb-amd64.sh 0.1.0
+```
+
+The distribution identifier is taken from `/etc/os-release` of the build
+host (`ubuntu20.04`, `debian12`), so the example above produces
+`bin/git-file-shard_0.1.0_ubuntu20.04_amd64.deb`. Pass `--distro` to
+label the package for another system, or an empty value to drop the
+segment:
+
+```sh
+./util/build-deb-amd64.sh 0.1.0 --distro ubuntu22.04
+./util/build-deb-amd64.sh 0.1.0 --distro ''
 ```
 
 ### Build from source

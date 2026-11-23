@@ -15,7 +15,8 @@ context: |
 
   The plugin ships as a standalone PyInstaller binary invoked by Git as
   `git file-shard`, plus platform installers: Inno Setup 7 EXE and WiX
-  Toolset 7 MSI for Windows, PKG and DMG for macOS.
+  Toolset 7 MSI for Windows, PKG and DMG for macOS, and a DEB package for
+  Debian/Ubuntu.
 
   Repository layout:
   - `src/git_file_shard/` - plugin core (scan, split, restore, merge, hash).
@@ -26,7 +27,8 @@ context: |
   - `src/installer_windows_wix/` - Windows MSI installer (WiX Toolset 7).
   - `src/installer_macos_pkg/` - macOS PKG installer.
   - `src/installer_macos_dmg/` - macOS DMG wrapping the PKG.
-  - `util/` - thin macOS PKG/DMG build wrappers (arm64, x86_64).
+  - `src/installer_linux_deb/` - Debian package installer (dpkg-deb).
+  - `util/` - thin PKG/DMG/DEB build wrappers (arm64/x86_64, amd64/arm64).
   - `doc/` - integration and usage guides.
   - `pyproject.toml`, `uv.lock`, `.python-version` - Python tooling.
   - `.github/workflows/build-application.yml` - CI build.
@@ -39,9 +41,9 @@ context: |
   `uv run --locked python -m py_compile git-file-shard.spec`), syntax-check
   shell scripts with `bash -n`, and build the artifacts affected by the change
   (`uv sync --locked`, `uv run --locked pyinstaller git-file-shard.spec
-  --noconfirm`). Every installer expects `dist/git-file-shard.exe` (Windows) or
-  `dist/git-file-shard` (macOS), plus `README.md` and `LICENSE.txt`, to exist
-  beforehand.
+  --noconfirm`). Every installer expects `dist/git-file-shard.exe` (Windows)
+  or `dist/git-file-shard` (Linux, macOS), plus `README.md` and `LICENSE.txt`,
+  to exist beforehand.
 
   Conventions: English for code, comments, documentation and OpenSpec
   artifacts; Russian only in localized installer resources. Python uses single
@@ -54,6 +56,7 @@ context: |
   - `wix-installer` - Windows MSI installer (WiX Toolset 7).
   - `pkg-installer` - macOS distribution package (`pkgbuild`/`productbuild`).
   - `dmg-installer` - macOS DMG image (`hdiutil`) wrapping the PKG.
+  - `deb-installer` - Debian package (`dpkg-deb`) for Debian/Ubuntu.
 
   Core plugin behavior (scan/split/restore/merge/hash) is not formalized as a
   capability yet.
