@@ -1,0 +1,9 @@
+{
+    "sdk": {
+        "version": "8.0.100",
+        "rollForward": "latestMinor"
+    },
+    "msbuild-sdks": {
+        "ImeSense.WixToolset.Sdk": "7.0.0"
+    }
+}

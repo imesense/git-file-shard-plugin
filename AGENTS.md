@@ -92,7 +92,7 @@ ISCC.exe --output=no src\installer_windows_inno\Setup.iss
 dotnet build src\installer_windows_wix\GitFileShard.Installer.Wix.wixproj -c Release -o bin
 ```
 
-`ISCC.exe` must be available on `PATH`. The Inno script expects `dist/git-file-shard.exe`, `README.md` and `LICENSE.txt` to exist, and writes output to `bin/`. Note: even `--output=no` deletes a stale file from the output directory, so rebuild after compile-only checks. The WiX build requires the .NET 8 SDK and the same payload; CI uploads `bin/en-US/GitFileShardPlugin.msi` and `bin/ru-RU/GitFileShardPlugin.msi`.
+`ISCC.exe` must be available on `PATH`. The Inno script expects `dist/git-file-shard.exe`, `README.md` and `LICENSE.txt` to exist, and writes output to `bin/`. Note: even `--output=no` deletes a stale file from the output directory, so rebuild after compile-only checks. The WiX build requires the .NET 8 SDK and the same payload; the .NET SDK version and the `ImeSense.WixToolset.Sdk` project SDK version are pinned in `global.json` at the repository root. CI uploads `bin/en-US/GitFileShardPlugin.msi` and `bin/ru-RU/GitFileShardPlugin.msi`.
 
 macOS installers (must run on macOS):
 
