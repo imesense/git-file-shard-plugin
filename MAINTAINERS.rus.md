@@ -1,0 +1,8 @@
+# Сопровождающие
+
+[English](./MAINTAINERS.md) | Русский
+
+## ImeSense
+
+- `*`
+  - `acidicMercury8`
