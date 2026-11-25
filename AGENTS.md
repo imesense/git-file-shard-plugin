@@ -20,7 +20,7 @@ src/installer_windows_wix/    WiX Toolset 7 MSI installer
 src/installer_macos_pkg/      macOS PKG installer
 src/installer_macos_dmg/      macOS DMG wrapper around the PKG
 src/installer_linux_deb/      Debian package installer (dpkg-deb)
-util/                   PKG/DMG/DEB build wrappers (arm64/x86_64, amd64/arm64)
+util/                   Installer build wrappers (PKG/DMG/DEB, Windows EXE/MSI)
 doc/                    integration-guide.md and usage-guide.md
 openspec/               OpenSpec artifacts (config.yaml, specs/, changes/)
 .agents/skills/         Local agent skills (git-ignored, installed from skills-lock.json)
@@ -82,17 +82,25 @@ bash -n util/build-deb-arm64.sh
 Windows installers:
 
 ```sh
-# Inno Setup 7 EXE -> bin/GitFileShardPlugin.exe
-ISCC.exe src\installer_windows_inno\Setup.iss
+# Inno Setup 7 EXE -> bin/GitFileShardPlugin.<arch>.exe
+util\build-exe-x64.bat
+util\build-exe-arm64.bat
+
+# WiX Toolset 7 MSI -> bin/<culture>/GitFileShardPlugin.<arch>.msi
+util\build-msi-x64.bat
+util\build-msi-arm64.bat
 
 # Compile check only, no output file
 ISCC.exe --output=no src\installer_windows_inno\Setup.iss
 
-# WiX Toolset 7 MSI -> bin/<culture>/GitFileShardPlugin.msi
-dotnet build src\installer_windows_wix\GitFileShard.Installer.Wix.wixproj -c Release -o bin
+# Direct builds, bypassing the wrappers
+ISCC.exe /DArch=x64 src\installer_windows_inno\Setup.iss
+dotnet build src\installer_windows_wix\GitFileShard.Installer.Wix.wixproj -c Release -p:Platform=x64 -o bin
 ```
 
-`ISCC.exe` must be available on `PATH`. The Inno script expects `dist/git-file-shard.exe`, `README.md` and `LICENSE.txt` to exist, and writes output to `bin/`. Note: even `--output=no` deletes a stale file from the output directory, so rebuild after compile-only checks. The WiX build requires the .NET 8 SDK and the same payload; the .NET SDK version and the `ImeSense.WixToolset.Sdk` project SDK version are pinned in `global.json` at the repository root. CI uploads `bin/en-US/GitFileShardPlugin.msi` and `bin/ru-RU/GitFileShardPlugin.msi`.
+The wrappers name the target architecture explicitly and share `util/_build-windows-installer.bat`, which reads the payload architecture from the PE header of `dist/git-file-shard.exe` (`util/detect-payload-arch.ps1`) and aborts when it does not match; every extra argument is forwarded verbatim (ISCC `/D` defines, `dotnet build` switches). The Inno script accepts `/DArch=<arch>` and maps x64 to `SetupArchitecture=x64` with `x64compatible` target, arm64 to the x64 setup stub with an `arm64` target (Inno Setup 7 has no Arm64 stub); the WiX project maps the MSBuild `Platform` to the MSI platform and to the output name.
+
+`ISCC.exe` is taken from `%ProgramFiles%\Inno Setup 7`, then from `PATH`. The Inno script expects `dist/git-file-shard.exe`, `README.md` and `LICENSE.txt` to exist, and writes output to `bin/`. Note: even `--output=no` deletes a stale file from the output directory, so rebuild after compile-only checks. The WiX build requires the .NET 8 SDK and the same payload; the .NET SDK version and the `ImeSense.WixToolset.Sdk` project SDK version are pinned in `global.json` at the repository root. CI uploads `bin/en-US/GitFileShardPlugin.x64.msi` and `bin/ru-RU/GitFileShardPlugin.x64.msi`.
 
 macOS installers (must run on macOS):
 
@@ -221,6 +229,23 @@ the sub-sections below.
   `Locales/Options.eng.isl` and `Locales/Options.rus.isl`.
 - Registry writes for machine/user scope use the `HKA` root key so behavior
   follows the install mode (admin -> HKLM, otherwise HKCU).
+- The target architecture comes from the `/DArch=x64|arm64` define
+  (default `x64`) and selects `SetupArchitecture`, `ArchitecturesAllowed` and
+  `ArchitecturesInstallIn64BitMode`, and suffixes the output name.
+
+### Windows batch wrappers (`util/*.bat`, `util/*.ps1`)
+
+- `@echo off` plus `setlocal EnableExtensions`; `rem` comments in English;
+  print errors to stderr with an `Error:` prefix and exit non-zero.
+- Keep them thin forwarders: the Inno/WiX project files own the build logic.
+- Name one wrapper per target and architecture (`build-exe-x64.bat`,
+  `build-exe-arm64.bat`, `build-msi-x64.bat`, `build-msi-arm64.bat`) and
+  keep the shared payload checks and tool discovery in
+  `util/_build-windows-installer.bat` instead of duplicating them.
+- The payload architecture is detected from the PE header and a wrapper whose
+  architecture does not match aborts the build.
+- Forward the remaining arguments verbatim: `%1` splits on `=`, so accumulate
+  extras from `%*` instead of rebuilding them from `%1`.
 
 ### WiX Toolset (`*.wxs`, `*.wxl`)
 
@@ -230,6 +255,8 @@ the sub-sections below.
   `Package.ru-ru.wxl`; the Russian file uses codepage 1251.
 - Keep `OptionsDlg` publish `Order` values greater than the built-in
   `WixUI_InstallDir` publishes on the same controls (see `Package.wxs`).
+- The MSI platform comes from the MSBuild `Platform` property (default `x64`
+  in the project file) and suffixes the output name.
 
 ### macOS PKG/DMG
 

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <Project Sdk="ImeSense.WixToolset.Sdk">
     <PropertyGroup>
-        <OutputName>GitFileShardPlugin</OutputName>
+        <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
+        <OutputName>GitFileShardPlugin.$(Platform)</OutputName>
     </PropertyGroup>
 
     <ItemGroup>

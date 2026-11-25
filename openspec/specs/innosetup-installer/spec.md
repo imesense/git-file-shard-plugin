@@ -23,17 +23,33 @@ Plugin" with AppId `{359E3F55-6620-4D88-B376-1636D7719F0A}`, publisher
 
 ### Requirement: Installation Scope and Target
 
-The installer SHALL default to `{autopf}\ImeSense\Git File Shard Plugin`.
+The installer SHALL default to `{autopf}\ImeSense\Git File Shard Plugin` and
+SHALL allow the privilege mode to be overridden on the command line.
 
-The installer SHALL restrict installation to x64-compatible Windows
-(`ArchitecturesAllowed=x64compatible`, 64-bit install mode) and SHALL
-allow the privilege mode to be overridden on the command line
-(`PrivilegesRequiredOverridesAllowed=commandline`).
+The installer SHALL target the Windows architectures supported by the
+bundled payload and SHALL use the x64 setup stub, because Inno Setup 7 ships
+no Arm64 setup stub.
 
 #### Scenario: Default installation directory
 
 - **WHEN** the user runs the installer without changing the directory
 - **THEN** the plugin is installed under `{autopf}\ImeSense\Git File Shard Plugin`
+
+#### Scenario: x64 payload targets x64-compatible Windows
+
+- **WHEN** the installer is built from an x64 payload
+- **THEN** `ArchitecturesAllowed` and `ArchitecturesInstallIn64BitMode` are
+  `x64compatible`, matching x64 Windows and Arm64 Windows 11
+- **AND** the plugin is written to the 64-bit `Program Files` directory
+
+#### Scenario: arm64 payload targets Arm64 Windows
+
+- **WHEN** the installer is built from an arm64 payload
+- **THEN** `ArchitecturesAllowed` and `ArchitecturesInstallIn64BitMode` are
+  `arm64`, so the setup refuses to install on x64 Windows and installs in
+  64-bit mode on Arm64 Windows
+- **AND** the x64 setup stub runs on Arm64 Windows 11 through the x64
+  emulation layer
 
 #### Scenario: Silent per-user install
 
@@ -129,14 +145,40 @@ custom message files.
 
 ### Requirement: Build Reproducibility
 
-The installer SHALL be built from
-`src/installer_windows_inno/Setup.iss` with Inno Setup 7
-(`ISCC.exe`), producing `bin/GitFileShardPlugin.exe`.
+The installer SHALL be built from `src/installer_windows_inno/Setup.iss`
+with Inno Setup 7 (`ISCC.exe`), producing
+`bin/GitFileShardPlugin.<arch>.exe` for the payload architecture, and SHALL
+require `dist/git-file-shard.exe`, `README.md` and `LICENSE.txt` to exist
+beforehand.
 
-The build SHALL require `dist/git-file-shard.exe`, `README.md` and
-`LICENSE.txt` to exist beforehand.
+#### Scenario: One wrapper per architecture
+
+- **WHEN** the repository is inspected
+- **THEN** `util/build-exe-x64.bat` and `util/build-exe-arm64.bat` exist,
+  each passing its architecture through `/DArch` and forwarding the
+  remaining arguments to `ISCC.exe` verbatim
 
 #### Scenario: Local build
 
-- **WHEN** `ISCC.exe Setup.iss` is executed from the installer directory
-- **THEN** `bin/GitFileShardPlugin.exe` is produced without errors
+- **WHEN** `util\build-exe-x64.bat` runs after an x64 PyInstaller payload is
+  built
+- **THEN** `bin/GitFileShardPlugin.x64.exe` is produced without errors
+
+#### Scenario: arm64 build
+
+- **WHEN** `util\build-exe-arm64.bat` runs after an arm64 PyInstaller payload
+  is built
+- **THEN** `bin/GitFileShardPlugin.arm64.exe` is produced without errors
+
+#### Scenario: Architecture mismatch
+
+- **WHEN** `util\build-exe-arm64.bat` runs with an x64 payload
+- **THEN** the build aborts with an error naming both architectures
+- **AND** no installer is produced
+
+#### Scenario: Architecture define
+
+- **WHEN** `ISCC.exe Setup.iss` runs without `/DArch`
+- **THEN** an `x64` installer is produced
+- **AND** `ISCC.exe /DArch=bad Setup.iss` fails with an error about the
+  unsupported `Arch` value

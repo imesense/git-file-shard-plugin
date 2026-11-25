@@ -16,7 +16,9 @@ context: |
   The plugin ships as a standalone PyInstaller binary invoked by Git as
   `git file-shard`, plus platform installers: Inno Setup 7 EXE and WiX
   Toolset 7 MSI for Windows, PKG and DMG for macOS, and a DEB package for
-  Debian/Ubuntu.
+  Debian/Ubuntu. Every installer is bound to the architecture of the payload
+  it packages (PyInstaller does not cross-compile) and carries it in the
+  artifact name.
 
   Repository layout:
   - `src/git_file_shard/` - plugin core (scan, split, restore, merge, hash).
@@ -28,7 +30,7 @@ context: |
   - `src/installer_macos_pkg/` - macOS PKG installer.
   - `src/installer_macos_dmg/` - macOS DMG wrapping the PKG.
   - `src/installer_linux_deb/` - Debian package installer (dpkg-deb).
-  - `util/` - thin PKG/DMG/DEB build wrappers (arm64/x86_64, amd64/arm64).
+  - `util/` - thin installer build wrappers (PKG/DMG/DEB, Windows EXE/MSI).
   - `doc/` - integration and usage guides.
   - `pyproject.toml`, `uv.lock`, `.python-version` - Python tooling.
   - `.github/workflows/build-application.yml` - CI build.
@@ -43,7 +45,12 @@ context: |
   (`uv sync --locked`, `uv run --locked pyinstaller git-file-shard.spec
   --noconfirm`). Every installer expects `dist/git-file-shard.exe` (Windows)
   or `dist/git-file-shard` (Linux, macOS), plus `README.md` and `LICENSE.txt`,
-  to exist beforehand.
+  to exist beforehand. On Windows the architecture-specific
+  `util/build-exe-<arch>.bat` and `util/build-msi-<arch>.bat` wrappers share
+  `util/_build-windows-installer.bat`, detect the payload architecture from
+  its PE header, abort when it does not match the wrapper, and name the
+  output after it (`bin/GitFileShardPlugin.<arch>.exe`,
+  `bin/<culture>/GitFileShardPlugin.<arch>.msi`).
 
   Conventions: English for code, comments, documentation and OpenSpec
   artifacts; Russian only in localized installer resources. Python uses single

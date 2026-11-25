@@ -28,14 +28,11 @@ downgrades with a localized error message.
 
 ### Requirement: Payload Installation
 
-The MSI SHALL install `git-file-shard.exe` into the `bin` subfolder of
-the installation folder, together with `README.md` and `LICENSE.txt` in
-the installation folder root.
-
-The default installation folder SHALL be
-`ProgramFiles6432Folder\ImeSense\Git File Shard Plugin`.
-
-The MSI SHALL NOT create shortcuts.
+The MSI SHALL install `git-file-shard.exe` into the `bin` subfolder of the
+installation folder, with `README.md` and `LICENSE.txt` in the installation
+folder root, SHALL default to
+`ProgramFiles6432Folder\ImeSense\Git File Shard Plugin`, SHALL follow the
+payload architecture in its MSI platform, and SHALL NOT create shortcuts.
 
 #### Scenario: Files after installation
 
@@ -43,6 +40,19 @@ The MSI SHALL NOT create shortcuts.
 - **THEN** `<INSTALLFOLDER>\bin\git-file-shard.exe`,
       `<INSTALLFOLDER>\README.md` and `<INSTALLFOLDER>\LICENSE.txt` exist
 - **AND** no shortcut is created
+
+#### Scenario: x64 package install location
+
+- **WHEN** the MSI is built from an x64 payload
+- **THEN** its platform is `x64`
+- **AND** `ProgramFiles6432Folder` resolves to the 64-bit `Program Files`,
+      not `Program Files (x86)`
+
+#### Scenario: arm64 package install location
+
+- **WHEN** the MSI is built from an arm64 payload
+- **THEN** its platform is `Arm64`
+- **AND** `ProgramFiles6432Folder` resolves to the 64-bit `Program Files`
 
 ### Requirement: Add to PATH Option
 
@@ -125,15 +135,40 @@ localization files; the Russian file SHALL use codepage 1251.
 ### Requirement: Build Reproducibility
 
 The MSI SHALL be built from
-`src/installer_windows_wix/GitFileShard.Installer.Wix.wixproj`
-with WiX Toolset 7 (`dotnet build`), producing
-`bin/GitFileShardPlugin.msi`.
-
-The build SHALL require `dist/git-file-shard.exe`, `README.md` and
+`src/installer_windows_wix/GitFileShard.Installer.Wix.wixproj` with WiX
+Toolset 7 (`dotnet build`), producing
+`bin/<culture>/GitFileShardPlugin.<arch>.msi` for the `en-US` and `ru-RU`
+cultures, and SHALL require `dist/git-file-shard.exe`, `README.md` and
 `LICENSE.txt` to exist beforehand.
+
+#### Scenario: One wrapper per architecture
+
+- **WHEN** the repository is inspected
+- **THEN** `util/build-msi-x64.bat` and `util/build-msi-arm64.bat` exist,
+  each passing its architecture through `-p:Platform=<arch>` and forwarding
+  the remaining arguments to `dotnet build` verbatim
 
 #### Scenario: Local build
 
-- **WHEN** `dotnet build` is executed on the WiX project after the
-      PyInstaller payload is built
-- **THEN** `bin/GitFileShardPlugin.msi` is produced without errors
+- **WHEN** `util\build-msi-x64.bat` runs after an x64 PyInstaller payload is
+  built
+- **THEN** `bin/en-US/GitFileShardPlugin.x64.msi` and
+      `bin/ru-RU/GitFileShardPlugin.x64.msi` are produced without errors
+
+#### Scenario: Default platform
+
+- **WHEN** the WiX project is built without an explicit `Platform` property
+- **THEN** the empty or `AnyCPU` platform becomes `x64`
+- **AND** the MSI platform and the output file name both use `x64`
+
+#### Scenario: arm64 build
+
+- **WHEN** the WiX project is built with `-p:Platform=arm64` after an arm64
+  PyInstaller payload is built
+- **THEN** `GitFileShardPlugin.arm64.msi` with platform `Arm64` is produced
+
+#### Scenario: Architecture mismatch
+
+- **WHEN** `util\build-msi-arm64.bat` runs with an x64 payload
+- **THEN** the build aborts with an error naming both architectures
+- **AND** no MSI is produced

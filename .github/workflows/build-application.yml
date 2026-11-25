@@ -163,14 +163,13 @@ jobs:
 
             - name: Publish installer
               run: |
-                  . ISCC.exe `
-                      src\installer_windows_inno\Setup.iss
+                  .\util\build-exe-x64.bat
 
             - name: Upload installer
               uses: actions/upload-artifact@v7
               with:
                   name: ${{ github.event.repository.name }}-installer-exe-${{ matrix.system }}-${{ github.sha }}
-                  path: ${{ github.workspace }}/bin/GitFileShardPlugin.exe
+                  path: ${{ github.workspace }}/bin/GitFileShardPlugin.x64.exe
 
     pack-windows-installer-msi:
         name: "Pack Windows MSI installer"
@@ -204,18 +203,15 @@ jobs:
 
             - name: Publish installer
               run: |
-                  dotnet build `
-                      ${{ github.workspace }}/src/installer_windows_wix/GitFileShard.Installer.Wix.wixproj `
-                      -c Release `
-                      -o ${{ github.workspace }}/bin/
+                  .\util\build-msi-x64.bat
 
             - name: Upload installer
               uses: actions/upload-artifact@v7
               with:
                   name: ${{ github.event.repository.name }}-installer-msi-${{ matrix.system }}-${{ github.sha }}
                   path: |
-                      ${{ github.workspace }}/bin/en-US/GitFileShardPlugin.msi
-                      ${{ github.workspace }}/bin/ru-RU/GitFileShardPlugin.msi
+                      ${{ github.workspace }}/bin/en-US/GitFileShardPlugin.x64.msi
+                      ${{ github.workspace }}/bin/ru-RU/GitFileShardPlugin.x64.msi
 
     pack-macos-installer-pkg:
         name: "Pack macOS PKG installer"

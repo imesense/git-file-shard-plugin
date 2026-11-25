@@ -5,6 +5,24 @@
 #define MyAppExeName "git-file-shard.exe"
 #define EscapeConstArgument(Value) StringChange(StringChange(StringChange(Value, "%", "%25"), ",", "%2c"), "}", "%7d")
 
+; Target architecture of the bundled payload. The build wrapper passes it
+; with /DArch=<arch>; x64 is the default.
+#ifndef Arch
+    #define Arch "x64"
+#endif
+
+#if Arch == "x64"
+    #define SetupArch "x64"
+    #define AllowedArch "x64compatible"
+#elif Arch == "arm64"
+    ; Inno Setup 7 ships no Arm64 setup stub, so the x64 stub is used: it runs
+    ; on Arm64 Windows 11 through emulation and installs the Arm64 payload.
+    #define SetupArch "x64"
+    #define AllowedArch "arm64"
+#else
+    #error Unsupported Arch value; expected "x64" or "arm64".
+#endif
+
 [Setup]
 AppId={{359E3F55-6620-4D88-B376-1636D7719F0A}
 AppName={#MyAppName}
@@ -16,15 +34,15 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\ImeSense\Git File Shard Plugin
 UninstallDisplayIcon={app}\bin\{#MyAppExeName}
-ArchitecturesAllowed=x64compatible
-ArchitecturesInstallIn64BitMode=x64compatible
-;SetupArchitecture=x64
+ArchitecturesAllowed={#AllowedArch}
+ArchitecturesInstallIn64BitMode={#AllowedArch}
+SetupArchitecture={#SetupArch}
 DisableProgramGroupPage=yes
 LicenseFile=..\..\LICENSE.txt
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
 OutputDir=..\..\bin
-OutputBaseFilename=GitFileShardPlugin
+OutputBaseFilename=GitFileShardPlugin.{#Arch}
 SolidCompression=yes
 WizardStyle=modern dynamic
 
