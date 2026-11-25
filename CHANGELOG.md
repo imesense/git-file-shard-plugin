@@ -11,4 +11,5 @@ English | [Русский](./CHANGELOG.rus.md)
 - Added Windows EXE and MSI installers.
 - Added macOS PKG and DMG installers.
 - Added Debian package.
+- Added Dev Container for development.
 - Configured GitHub Actions.

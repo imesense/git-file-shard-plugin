@@ -9,6 +9,11 @@ Thumbs.db
 /build
 /dist
 /obj
+/out
+
+# Dev container
+.devcontainer/.env
+/.uv
 
 # Visual Studio cache and settings
 /.vs

@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/a08f8d51631b7127ddac3d2c65537db429d0f1d0/schema/compose-spec.json
+
+services:
+    git-file-shard-plugin-devcontainer:
+        container_name: git-file-shard-plugin-devcontainer
+        image: ${IMAGE_REGISTRY:-ghcr.io/imesense}/git-file-shard-plugin-devcontainer:${IMAGE_TAG:-latest}
+        user: shard
+        working_dir: /src
+        volumes:
+            - ${VOLUME_SOURCES:-..}:/src:delegated
+            - ${VOLUME_UV:-../.uv}:/uv:delegated
+        networks:
+            - git-file-shard-plugin-devcontainer
+        command:
+            - "tail"
+            - "-f"
+            - "/dev/null"
+
+networks:
+    git-file-shard-plugin-devcontainer:
+        name: git-file-shard-plugin-devcontainer
+        driver: bridge

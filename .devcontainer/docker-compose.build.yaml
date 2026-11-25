@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/a08f8d51631b7127ddac3d2c65537db429d0f1d0/schema/compose-spec.json
+
+services:
+    git-file-shard-plugin-devcontainer:
+        build:
+            dockerfile: .devcontainer/Dockerfile
+            context: ..
+            args:
+                PYTHON_VERSION: "1-3.10"
+                DEBIAN_VARIANT: "bookworm"
+                UV_VERSION: "0.13"

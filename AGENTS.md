@@ -21,8 +21,12 @@ src/installer_macos_pkg/      macOS PKG installer
 src/installer_macos_dmg/      macOS DMG wrapper around the PKG
 src/installer_linux_deb/      Debian package installer (dpkg-deb)
 util/                   Installer build wrappers (PKG/DMG/DEB, Windows EXE/MSI)
+                        and the dev container image helper
 doc/                    integration-guide.md and usage-guide.md
 openspec/               OpenSpec artifacts (config.yaml, specs/, changes/)
+.devcontainer/          Dev Container definition (Python 3.10 + uv)
+.dockerignore           Build context exclusions for the dev container image
+
 .agents/skills/         Local agent skills (git-ignored, installed from skills-lock.json)
 skills-lock.json        Locked agent skill sources (committed)
 .github/workflows/      CI build workflow
@@ -143,6 +147,21 @@ uv run --locked pyinstaller git-file-shard.spec --noconfirm
 The DEB build requires `dpkg-deb` and `readelf` on `PATH`, verifies that the payload ELF architecture matches `--arch` (`amd64` or `arm64`), and stages `/opt/imesense/git-file-shard-plugin/bin/git-file-shard`, `README.md` and `LICENSE.txt` under `share/doc/`, plus the `/usr/local/bin/git-file-shard` symlink. The output name embeds a distribution identifier taken from `/etc/os-release` (`ID` + `VERSION_ID`, e.g. `ubuntu20.04`); `--distro <id>` overrides it and an empty value drops the segment. The identifier only labels the file: the package `Version` stays as passed.
 
 CI: `.github/workflows/build-application.yml` sets up `uv` with `astral-sh/setup-uv`, runs `uv sync --locked` (which fails when `uv.lock` is stale), the byte-compile checks on `ubuntu-24.04`, then PyInstaller on `windows-2022`, `ubuntu-24.04` and `macos-15` and uploads `dist/`. The MSI, PKG, DMG and DEB jobs build from those artifacts; the Inno EXE job is currently disabled (`if: false`). Keep workflow commands and paths in sync with the local build steps above.
+
+Dev container (Python development environment only):
+
+```sh
+# Build the image -> ghcr.io/imesense/git-file-shard-plugin-devcontainer:latest
+docker compose \
+    --file .devcontainer/docker-compose.yaml \
+    --file .devcontainer/docker-compose.build.yaml \
+    build
+
+# Build, tag and export the image -> out/<version>/*-devcontainer-image.tar
+util\build-devcontainer-image.bat <version>
+```
+
+`.github/workflows/build-devcontainers.yml` builds the image on `ubuntu-24.04` and publishes `latest` plus a commit-timestamp tag to `ghcr.io/<repository>-devcontainer`. The container is not a packaging environment: it builds the Linux payload with PyInstaller, but the DEB, PKG, DMG, EXE and MSI installers stay on their matching host OS or CI runner.
 
 ## Conventions
 
@@ -287,6 +306,27 @@ the sub-sections below.
   `<distro>` comes from `/etc/os-release` (`ID` + `VERSION_ID`) or from
   `--distro <id>`; an empty value omits the segment. `arm64` packages
   must be built on an arm64 host.
+
+### Dev container (`.devcontainer/`, `.dockerignore`)
+
+- 4-space indentation in the Dockerfile and Compose files; comments in
+  English.
+- Keep the Compose split: `docker-compose.yaml` owns the runtime definition
+  and `docker-compose.build.yaml` owns the `build` section. Every variable
+  has a default in the Compose file and is documented in `.env.example`.
+- The base image tag is parameterized (`PYTHON_VERSION`, `DEBIAN_VARIANT`);
+  `UV_VERSION` tracks the `required-version` line in `pyproject.toml`
+  (0.13). `uv` is copied from its official image through a named build
+  stage, because BuildKit does not expand build arguments in `COPY --from`.
+- Keep `UV_CACHE_DIR` and `UV_PROJECT_ENVIRONMENT` outside the `/src`
+  bind mount, so the host checkout is not filled with Linux caches or
+  virtual environments.
+- The container is a Python environment only. Do not add `dpkg-deb`,
+  `pkgbuild`/`hdiutil`, Inno Setup or WiX tooling: native installers stay on
+  their matching host OS or CI runner.
+- Keep `.dockerignore` free of exceptions: the image needs no repository
+  files, so Git metadata, CI settings, build outputs, caches, local skills
+  and `*.env*` files stay out of the build context.
 
 ### Markdown
 

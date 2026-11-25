@@ -11,4 +11,5 @@
 - Добавлены установщики Windows EXE и MSI.
 - Добавлены установщики macOS PKG и DMG.
 - Добавлен пакет Debian.
+- Добавлен Dev Container для разработки.
 - Настроен GitHub Actions.

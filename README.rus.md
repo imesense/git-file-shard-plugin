@@ -5,7 +5,9 @@
 [![Language](https://img.shields.io/badge/Language-Python-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE.txt)
 [![Release](https://img.shields.io/github/v/release/imesense/git-file-shard-plugin?include_prereleases&label=Release)](https://github.com/imesense/git-file-shard-plugin/releases/latest)
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/imesense/git-file-shard-plugin)
 [![Build application](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-application.yml/badge.svg)](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-application.yml)
+[![Build devcontainers](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-devcontainers.yml/badge.svg)](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-devcontainers.yml)
 
 Git-плагин, который разбивает большие файлы на части и собирает их обратно, чтобы репозитории могли хранить крупные бинарные ресурсы, не сохраняя оригиналы в Git.
 
@@ -27,7 +29,22 @@ Git-плагин, который разбивает большие файлы н
 
 Для разработки:
 
-- __Visual Studio Code__ или любой другой редактор.
+- __Visual Studio Code__ или любой другой редактор,
+- __Docker__ и __Docker Compose__ (опционально, для Dev Container).
+
+## Разработка в контейнере
+
+Откройте репозиторий в __Visual Studio Code__ и выполните __Dev Containers: Reopen in Container__, или соберите образ напрямую:
+
+```sh
+docker compose \
+    --file .devcontainer/docker-compose.yaml \
+    --file .devcontainer/docker-compose.build.yaml \
+    build
+```
+
+Контейнер предоставляет Python 3.10, `uv` и Git, устанавливает зафиксированные зависимости при первом запуске и хранит кеш `uv` и виртуальное окружение вне рабочей папки.
+Это среда сборки Python-части: установщики DEB, PKG, DMG, EXE и MSI собираются на соответствующей хост-ОС или в CI.
 
 ## Сборка
 

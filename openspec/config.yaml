@@ -30,10 +30,15 @@ context: |
   - `src/installer_macos_pkg/` - macOS PKG installer.
   - `src/installer_macos_dmg/` - macOS DMG wrapping the PKG.
   - `src/installer_linux_deb/` - Debian package installer (dpkg-deb).
-  - `util/` - thin installer build wrappers (PKG/DMG/DEB, Windows EXE/MSI).
+  - `util/` - thin installer build wrappers (PKG/DMG/DEB, Windows EXE/MSI)
+    and the dev container image helper.
   - `doc/` - integration and usage guides.
   - `pyproject.toml`, `uv.lock`, `.python-version` - Python tooling.
+  - `.devcontainer/` - Dev Container definition (Python 3.10 + `uv`).
+  - `.dockerignore` - build context exclusions for the container image.
   - `.github/workflows/build-application.yml` - CI build.
+  - `.github/workflows/build-devcontainers.yml` - CI container image build.
+
 
   Verification is command-based: there is no test suite. Python tooling is
   managed with `uv` (`uv.lock` is the source of truth and `.python-version`
@@ -52,6 +57,16 @@ context: |
   output after it (`bin/GitFileShardPlugin.<arch>.exe`,
   `bin/<culture>/GitFileShardPlugin.<arch>.msi`).
 
+  The Dev Container (`.devcontainer/`) provides Python 3.10, `uv` 0.13 and
+  Git for development and for building the Linux payload with PyInstaller.
+  It keeps the `uv` cache (`/uv`) and the virtual environment (`/opt/venv`)
+  outside the bind-mounted workspace. It is not a packaging environment:
+  the DEB, PKG, DMG, EXE and MSI installers stay on their matching host OS
+  or CI runner. Verify it with `docker compose --file
+  .devcontainer/docker-compose.yaml --file
+  .devcontainer/docker-compose.build.yaml config` and a local image build.
+
+
   Conventions: English for code, comments, documentation and OpenSpec
   artifacts; Russian only in localized installer resources. Python uses single
   quotes, 4-space indentation, docstrings on public functions and `Error:` /
@@ -64,6 +79,7 @@ context: |
   - `pkg-installer` - macOS distribution package (`pkgbuild`/`productbuild`).
   - `dmg-installer` - macOS DMG image (`hdiutil`) wrapping the PKG.
   - `deb-installer` - Debian package (`dpkg-deb`) for Debian/Ubuntu.
+  - `devcontainer` - Python development container (Python 3.10 + `uv`).
 
   Core plugin behavior (scan/split/restore/merge/hash) is not formalized as a
   capability yet.

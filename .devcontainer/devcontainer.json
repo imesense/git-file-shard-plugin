@@ -1,0 +1,71 @@
+{
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/926880e9c768493eec415224f35146bdfcd63904/schemas/devContainer.schema.json",
+
+    "name": "Git File Shard Plugin",
+    "dockerComposeFile": "docker-compose.yaml",
+    "service": "git-file-shard-plugin-devcontainer",
+    "remoteUser": "shard",
+    "workspaceFolder": "/src",
+    "shutdownAction": "stopCompose",
+
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1.0.15": {}
+    },
+
+    "postCreateCommand": "uv sync --locked",
+
+    "customizations": {
+        "codespaces": {
+            "openFiles": [
+                "README.md"
+            ]
+        },
+
+        "vscode": {
+            "extensions": [
+                "redhat.vscode-yaml",
+
+                "EditorConfig.EditorConfig",
+                "DavidAnson.vscode-markdownlint",
+                "tamasfe.even-better-toml",
+
+                "ms-python.python",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode-remote.remote-containers",
+                "GitHub.vscode-github-actions"
+            ],
+
+            "settings": {
+                "files.associations": {
+                    "*.code-workspace": "jsonc",
+                    ".vscode/*.json": "jsonc",
+
+                    "*.py": "python",
+                    "*.spec": "python",
+
+                    "post-checkout": "shellscript",
+                    "post-merge": "shellscript",
+                    "pre-commit": "shellscript",
+
+                    "*.env*": "properties"
+                },
+
+                "terminal.integrated.cwd": "/src",
+
+                "python.defaultInterpreterPath": "/opt/venv/bin/python",
+
+                "redhat.telemetry.enabled": false,
+
+                "[yaml]": {
+                    "editor.defaultFormatter": "redhat.vscode-yaml"
+                },
+                "[json]": {
+                    "editor.defaultFormatter": "vscode.json-language-features"
+                },
+                "[markdown]": {
+                    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+                }
+            }
+        }
+    }
+}

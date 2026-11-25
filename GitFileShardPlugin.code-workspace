@@ -24,7 +24,11 @@
             "editorconfig.editorconfig",
             "tamasfe.even-better-toml",
             "github.vscode-github-actions",
-            "chouzz.vscode-innosetup"
+            "chouzz.vscode-innosetup",
+
+            "ms-azuretools.vscode-docker",
+            "ms-vscode-remote.remote-containers",
+            "redhat.vscode-yaml"
         ]
     }
 }

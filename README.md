@@ -5,7 +5,9 @@ English | [Русский](./README.rus.md)
 [![Language](https://img.shields.io/badge/Language-Python-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE.txt)
 [![Release](https://img.shields.io/github/v/release/imesense/git-file-shard-plugin?include_prereleases&label=Release)](https://github.com/imesense/git-file-shard-plugin/releases/latest)
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/imesense/git-file-shard-plugin)
 [![Build application](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-application.yml/badge.svg)](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-application.yml)
+[![Build devcontainers](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-devcontainers.yml/badge.svg)](https://github.com/imesense/git-file-shard-plugin/actions/workflows/build-devcontainers.yml)
 
 Git plugin that splits large files into shards and merges them back, so repositories can track big binary assets without storing the originals in Git.
 
@@ -27,7 +29,22 @@ For building:
 
 For development:
 
-- __Visual Studio Code__ or any other editor.
+- __Visual Studio Code__ or any other editor,
+- __Docker__ and __Docker Compose__ (optional, for the Dev Container).
+
+## Development in a container
+
+Open the repository in __Visual Studio Code__ and run __Dev Containers: Reopen in Container__, or build the image directly:
+
+```sh
+docker compose \
+    --file .devcontainer/docker-compose.yaml \
+    --file .devcontainer/docker-compose.build.yaml \
+    build
+```
+
+The container provides Python 3.10, `uv` and Git, installs the locked dependencies on first start, and keeps the `uv` cache and the virtual environment outside the workspace.
+It is a Python build environment only: the DEB, PKG, DMG, EXE and MSI installers are built on the matching host OS or CI runner.
 
 ## Building
 

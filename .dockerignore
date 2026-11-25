@@ -1,0 +1,44 @@
+# Global ignoring of different binaries and another temporary files
+
+# Git files and folders
+.git/
+*.gitattributes
+*.gitignore
+
+# Docker files
+.dockerignore
+*.env*
+
+# GitHub files and folders
+.github/
+
+# Local agent skills
+.agents/
+
+# OpenSpec artifacts
+openspec/
+
+# Documentation
+doc/
+
+# Build results
+/bin
+/build
+/dist
+/obj
+/out
+
+# Python cache and settings
+/.pip
+/.venv
+/.uv
+__pycache__/
+*.egg-info
+
+# Visual Studio Code files
+.vscode/
+*.code-workspace
+
+# System cache
+.DS_Store
+Thumbs.db
